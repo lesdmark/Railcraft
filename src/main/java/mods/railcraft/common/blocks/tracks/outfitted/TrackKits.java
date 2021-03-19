@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -46,7 +46,7 @@ public enum TrackKits implements IRailcraftObjectContainer<IRailcraftObject<Trac
     DISEMBARK(4, "disembarking", 4, TrackKitDisembark.class, () -> recipe(Blocks.STONE_PRESSURE_PLATE, Items.LEAD, Items.REDSTONE)),
     DUMPING(2, "dumping", 4, TrackKitDumping.class, () -> recipe(RailcraftItems.PLATE, Metal.STEEL, Items.REDSTONE)),
     EMBARKING(2, "embarking", 4, TrackKitEmbarking.class, () -> recipe(Items.ENDER_PEARL, Items.LEAD, Items.REDSTONE)),
-    GATED(8, "gated", 4, TrackKitGated.class, () -> recipe("gateWood", RailcraftItems.RAIL, EnumRail.ADVANCED, Items.REDSTONE)),
+    GATED(8, "gated", 4, TrackKitGated.class, () -> recipe("fenceGateWood", RailcraftItems.RAIL, EnumRail.ADVANCED, Items.REDSTONE)),
     HIGH_SPEED_TRANSITION(4, "transition", 8, TrackKitSpeedTransition.class, () -> recipe(RailcraftItems.RAIL, EnumRail.ADVANCED, RailcraftItems.RAIL, EnumRail.ADVANCED, Items.REDSTONE, Items.REDSTONE)),
     LAUNCHER(2, "launcher", 1, TrackKitLauncher.class, () -> recipe(Blocks.PISTON, "blockSteel", "blockSteel", Items.REDSTONE)) {
         {
@@ -122,7 +122,7 @@ public enum TrackKits implements IRailcraftObjectContainer<IRailcraftObject<Trac
     private final int states;
     private final Class<? extends TrackKitRailcraft> trackInstance;
     private final Supplier<List<Object[]>> recipeSupplier;
-    private final Definition def;
+    private final SimpleDef def;
     private TrackKit trackKit;
     private boolean visible = true;
     private boolean allowedOnSlopes;
@@ -137,14 +137,14 @@ public enum TrackKits implements IRailcraftObjectContainer<IRailcraftObject<Trac
 
     TrackKits(int states, String tag, int recipeOutput, Class<? extends TrackKitRailcraft> trackInstance, Supplier<List<Object[]>> recipeSupplier) {
         this.states = states;
-        this.def = new Definition(this, tag, null);
+        this.def = new SimpleDef(this, tag);
         this.recipeOutput = recipeOutput;
         this.trackInstance = trackInstance;
         this.recipeSupplier = recipeSupplier;
     }
 
     @Override
-    public Definition getDef() {
+    public SimpleDef getDef() {
         return def;
     }
 

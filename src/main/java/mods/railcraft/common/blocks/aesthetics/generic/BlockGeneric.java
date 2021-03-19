@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -14,7 +14,6 @@ import mods.railcraft.common.blocks.BlockMeta;
 import mods.railcraft.common.blocks.BlockRailcraftSubtyped;
 import mods.railcraft.common.blocks.RailcraftBlocks;
 import mods.railcraft.common.carts.EntityTunnelBore;
-import mods.railcraft.common.plugins.forestry.ForestryPlugin;
 import mods.railcraft.common.plugins.forge.CreativePlugin;
 import mods.railcraft.common.plugins.forge.HarvestPlugin;
 import mods.railcraft.common.plugins.forge.WorldPlugin;
@@ -38,6 +37,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.oredict.OreDictionary;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import static mods.railcraft.common.blocks.aesthetics.metals.EnumMetal.*;
@@ -47,7 +47,7 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
 
     public BlockGeneric() {
         super(Material.ROCK);
-        setDefaultState(blockState.getBaseState().withProperty(getVariantProperty(), EnumGeneric.BLOCK_COKE));
+        setDefaultState(blockState.getBaseState().withProperty(getVariantEnumProperty(), EnumGeneric.BLOCK_COKE));
         setResistance(20);
         setHardness(5);
         setSoundType(SoundType.STONE);
@@ -58,27 +58,15 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
 
     @Override
     public void initializeDefinition() {
-        HarvestPlugin.setStateHarvestLevel("pickaxe", 1, EnumGeneric.BLOCK_COKE);
-        HarvestPlugin.setStateHarvestLevel("pickaxe", 1, EnumGeneric.STONE_ABYSSAL);
-        HarvestPlugin.setStateHarvestLevel("pickaxe", 1, EnumGeneric.STONE_QUARRIED);
-
-        HarvestPlugin.setStateHarvestLevel("axe", 0, EnumGeneric.BLOCK_CREOSOTE);
         HarvestPlugin.setStateHarvestLevel("shovel", 3, EnumGeneric.CRUSHED_OBSIDIAN);
 
         EntityTunnelBore.addMineableBlock(this);
-
-        ForestryPlugin.addBackpackItem("forestry.miner", EnumGeneric.BLOCK_COKE.getStack());
-
-        ForestryPlugin.addBackpackItem("forestry.builder", EnumGeneric.BLOCK_CREOSOTE.getStack());
-
-        ForestryPlugin.addBackpackItem("forestry.digger", EnumGeneric.STONE_ABYSSAL.getStack());
-        ForestryPlugin.addBackpackItem("forestry.digger", EnumGeneric.STONE_QUARRIED.getStack());
 
         for (EnumGeneric block : EnumGeneric.VALUES) {
             MicroBlockPlugin.addMicroBlockCandidate(this, block.ordinal());
         }
 
-        OreDictionary.registerOre("blockCoke", EnumGeneric.BLOCK_COKE.getStack());
+        OreDictionary.registerOre("blockFuelCoke", EnumGeneric.BLOCK_COKE.getStack());
     }
 
     @Override
@@ -86,7 +74,7 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
         IBlockState state = getDefaultState();
         if (variant != null) {
             checkVariant(variant);
-            state = state.withProperty(getVariantProperty(), (EnumGeneric) variant);
+            state = state.withProperty(getVariantEnumProperty(), (EnumGeneric) variant);
         }
         return state;
     }
@@ -100,7 +88,7 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
      */
     @Override
     public IBlockState getStateFromMeta(int meta) {
-        return getDefaultState().withProperty(getVariantProperty(), EnumGeneric.fromOrdinal(meta));
+        return getDefaultState().withProperty(getVariantEnumProperty(), EnumGeneric.fromOrdinal(meta));
     }
 
     /**
@@ -108,12 +96,12 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
      */
     @Override
     public int getMetaFromState(IBlockState state) {
-        return state.getValue(getVariantProperty()).ordinal();
+        return state.getValue(getVariantEnumProperty()).ordinal();
     }
 
     @Override
     protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, getVariantProperty());
+        return new BlockStateContainer(this, getVariantEnumProperty());
     }
 
     private EnumGeneric getVariant(IBlockAccess world, BlockPos pos) {
@@ -128,18 +116,13 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
 
     @Override
     public int damageDropped(IBlockState state) {
-        return state.getValue(getVariantProperty()).ordinal();
+        return state.getValue(getVariantEnumProperty()).ordinal();
     }
 
     @SuppressWarnings("deprecation")
     @Override
     public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
         getVariant(state).getBlockDef().onNeighborBlockChange(worldIn, pos, state, neighborBlock);
-    }
-
-    @Override
-    public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
-        getVariant(state).getBlockDef().updateTick(world, pos, rand);
     }
 
     @Override
@@ -193,24 +176,30 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
     @Override
     public SoundType getSoundType(IBlockState state, World world, BlockPos pos, @Nullable Entity entity) {
         switch (getVariant(state)) {
-            case BLOCK_CREOSOTE:
-                return SoundType.WOOD;
             case CRUSHED_OBSIDIAN:
                 return SoundType.GROUND;
-            case BLOCK_COKE:
-                return SoundType.STONE;
         }
         return super.getSoundType(state, world, pos, entity);
     }
 
-    @Override
-    @SuppressWarnings("deprecation")
-    public void randomTick(World worldIn, BlockPos pos, IBlockState state, Random random) {
+    private void swapBlock(World world, BlockPos pos, IBlockState state) {
         EnumGeneric generic = getVariant(state);
         IBlockState newState = null;
         switch (generic) {
+            case STONE_ABYSSAL:
+                newState = RailcraftBlocks.ABYSSAL_STONE.getDefaultState();
+                break;
+            case STONE_QUARRIED:
+                newState = RailcraftBlocks.QUARRIED_STONE.getDefaultState();
+                break;
             case BLOCK_CONCRETE:
                 newState = RailcraftBlocks.REINFORCED_CONCRETE.getDefaultState();
+                break;
+            case BLOCK_COKE:
+                newState = RailcraftBlocks.COKE_BLOCK.getDefaultState();
+                break;
+            case BLOCK_CREOSOTE:
+                newState = RailcraftBlocks.CREOSOTE_BLOCK.getDefaultState();
                 break;
             case BLOCK_BRASS:
                 newState = RailcraftBlocks.METAL.getState(BLOCK_BRASS);
@@ -245,6 +234,18 @@ public class BlockGeneric extends BlockRailcraftSubtyped<EnumGeneric> {
 
         }
         if (newState != null)
-            WorldPlugin.setBlockState(worldIn, pos, newState);
+            WorldPlugin.setBlockState(world, pos, newState);
+    }
+
+    @Override
+    public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
+        swapBlock(world, pos, state);
+        Arrays.stream(EnumFacing.VALUES).forEach(side -> {
+            try {
+                IBlockState neighbor = WorldPlugin.getBlockState(world, pos.offset(side));
+                if (neighbor.getBlock() == this)
+                    world.scheduleUpdate(pos.offset(side), neighbor.getBlock(), 1);
+            } catch (Exception ignored) {}
+        });
     }
 }

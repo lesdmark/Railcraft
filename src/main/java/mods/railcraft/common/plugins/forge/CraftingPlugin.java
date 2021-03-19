@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -117,7 +117,6 @@ public class CraftingPlugin {
     }
 
     // TODO replace all this junk with a builder
-    @Deprecated
     public static void addShapedRecipe(ItemStack result, Object... recipeArray) {
         addShapedRecipe(null, DEFAULT_GROUP, result, recipeArray);
     }
@@ -136,7 +135,7 @@ public class CraftingPlugin {
             name = checkName(name, output, recipeArray);
             recipe = makeShapedRecipe(name, group, output, recipeArray);
         } catch (InvalidRecipeException ex) {
-            Game.log().trace(Level.WARN, ex.getRawMessage());
+            Game.log().throwable(Level.WARN, 1, ex, CraftingPlugin.class);
             return;
         }
         addRecipe(name, recipe);
@@ -157,7 +156,7 @@ public class CraftingPlugin {
             name = checkName(name, output, recipeArray);
             recipe = makeShapelessRecipe(name, group, output, recipeArray);
         } catch (InvalidRecipeException ex) {
-            Game.log().msg(Level.WARN, ex.getRawMessage());
+            Game.log().throwable(Level.WARN, 1, ex, CraftingPlugin.class);
             return;
         }
         addRecipe(name, recipe);

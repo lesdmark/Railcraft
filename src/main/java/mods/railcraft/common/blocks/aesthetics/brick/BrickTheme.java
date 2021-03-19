@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -13,7 +13,6 @@ import mods.railcraft.api.core.IVariantEnum;
 import mods.railcraft.api.crafting.Crafters;
 import mods.railcraft.common.blocks.IRailcraftBlock;
 import mods.railcraft.common.blocks.RailcraftBlocks;
-import mods.railcraft.common.blocks.aesthetics.generic.EnumGeneric;
 import mods.railcraft.common.core.IRailcraftObjectContainer;
 import mods.railcraft.common.items.ItemDust.EnumDust;
 import mods.railcraft.common.items.RailcraftItems;
@@ -30,21 +29,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Optional;
 
-import static mods.railcraft.common.blocks.aesthetics.brick.BrickVariant.BLOCK;
 import static mods.railcraft.common.blocks.aesthetics.brick.BrickVariant.COBBLE;
+import static mods.railcraft.common.blocks.aesthetics.brick.BrickVariant.POLISHED;
 
 /**
  * The Brick Themes (clever, I know)
  * Created by CovertJaguar on 3/12/2015.
  */
 public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
-    ABYSSAL(RailcraftBlocks.BRICK_ABYSSAL, MapColor.BLACK) {
+    ABYSSAL(RailcraftBlocks.ABYSSAL_BRICK, MapColor.BLACK) {
         @Override
         public void initRecipes(BlockBrick block) {
-            if (EnumGeneric.STONE_ABYSSAL.isEnabled()) {
-                CraftingPlugin.addFurnaceRecipe(EnumGeneric.STONE_ABYSSAL.getStack(), block.getStack(BLOCK), 0.05f);
+            if (RailcraftBlocks.ABYSSAL_STONE.isEnabled()) {
+                CraftingPlugin.addFurnaceRecipe(RailcraftBlocks.ABYSSAL_STONE.getStack(), block.getStack(POLISHED), 0.05f);
                 if (COBBLE.isEnabled()) {
-                    Crafters.rockCrusher().makeRecipe(EnumGeneric.STONE_ABYSSAL)
+                    Crafters.rockCrusher().makeRecipe(RailcraftBlocks.ABYSSAL_STONE)
                             .name("railcraft:stone_abyssal")
                             .addOutput(getStack(COBBLE))
                             .register();
@@ -52,40 +51,34 @@ public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
             }
         }
     },
-    BLEACHEDBONE(RailcraftBlocks.BRICK_BLEACHED_BONE, MapColor.ADOBE) {
+    BLEACHEDBONE(RailcraftBlocks.BLEACHED_BONE_BRICK, MapColor.ADOBE) {
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addFurnaceRecipe(new ItemStack(Blocks.BONE_BLOCK), block.getStack(2, BLOCK), 0.3F);
+            CraftingPlugin.addFurnaceRecipe(new ItemStack(Blocks.BONE_BLOCK), block.getStack(2, POLISHED), 0.3F);
         }
     },
-    BLOODSTAINED(RailcraftBlocks.BRICK_BLOOD_STAINED, MapColor.RED) {
+    BLOODSTAINED(RailcraftBlocks.BLOOD_STAINED_BRICK, MapColor.RED) {
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addShapelessRecipe(block.getStack(BLOCK), new ItemStack(Blocks.SANDSTONE, 1, 2), new ItemStack(Items.ROTTEN_FLESH));
-            CraftingPlugin.addShapelessRecipe(block.getStack(BLOCK), new ItemStack(Blocks.SANDSTONE, 1, 2), new ItemStack(Items.BEEF));
+            CraftingPlugin.addShapelessRecipe(block.getStack(POLISHED), new ItemStack(Blocks.SANDSTONE, 1, 2), new ItemStack(Items.ROTTEN_FLESH));
+            CraftingPlugin.addShapelessRecipe(block.getStack(POLISHED), new ItemStack(Blocks.SANDSTONE, 1, 2), new ItemStack(Items.BEEF));
         }
     },
-    FROSTBOUND(RailcraftBlocks.BRICK_FROST_BOUND, MapColor.BLUE) {
+    FROSTBOUND(RailcraftBlocks.FROST_BOUND_BRICK, MapColor.BLUE) {
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addShapedRecipe(block.getStack(8, BLOCK),
+            CraftingPlugin.addShapedRecipe(block.getStack(8, POLISHED),
                     "III",
                     "ILI",
                     "III",
-                    'I', new ItemStack(Blocks.ICE),
-                    'L', "gemLapis"); // TODO remove ice one in the future
-            CraftingPlugin.addShapedRecipe(block.getStack(8, BLOCK),
-                    "III",
-                    "ILI",
-                    "III",
-                    'I', new ItemStack(Blocks.PACKED_ICE),
+                    'I', Blocks.PACKED_ICE,
                     'L', "gemLapis");
         }
     },
-    INFERNAL(RailcraftBlocks.BRICK_INFERNAL, MapColor.GRAY) {
+    INFERNAL(RailcraftBlocks.INFERNAL_BRICK, MapColor.GRAY) {
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addShapedRecipe(block.getStack(2, BLOCK),
+            CraftingPlugin.addShapedRecipe(block.getStack(2, POLISHED),
                     "MB",
                     "BM",
                     'B', new ItemStack(Blocks.NETHER_BRICK),
@@ -93,13 +86,13 @@ public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
             );
         }
     },
-    QUARRIED(RailcraftBlocks.BRICK_QUARRIED, MapColor.SNOW) {
+    QUARRIED(RailcraftBlocks.QUARRIED_BRICK, MapColor.SNOW) {
         @Override
         public void initRecipes(BlockBrick block) {
-            if (EnumGeneric.STONE_QUARRIED.isEnabled()) {
-                CraftingPlugin.addFurnaceRecipe(EnumGeneric.STONE_QUARRIED.getStack(), block.getStack(BLOCK), 0.05f);
+            if (RailcraftBlocks.QUARRIED_STONE.isEnabled()) {
+                CraftingPlugin.addFurnaceRecipe(RailcraftBlocks.QUARRIED_STONE.getStack(), block.getStack(POLISHED), 0.05f);
                 if (COBBLE.isEnabled()) {
-                    Crafters.rockCrusher().makeRecipe(EnumGeneric.STONE_QUARRIED)
+                    Crafters.rockCrusher().makeRecipe(RailcraftBlocks.QUARRIED_STONE)
                             .name("railcraft:stone_quarried")
                             .addOutput(getStack(COBBLE))
                             .register();
@@ -107,147 +100,147 @@ public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
             }
         }
     },
-    SANDY(RailcraftBlocks.BRICK_SANDY, MapColor.SAND) {
+    SANDY(RailcraftBlocks.SANDY_BRICK, MapColor.SAND) {
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addShapedRecipe(block.getStack(BLOCK),
+            CraftingPlugin.addShapedRecipe(block.getStack(POLISHED),
                     "BM",
                     "MB",
                     'B', "ingotBrick",
                     'M', new ItemStack(Blocks.SAND, 1, 0));
         }
     },
-    REDSANDY(RailcraftBlocks.BRICK_RED_SANDY, MapColor.DIRT) {
+    BADLANDS(RailcraftBlocks.BADLANDS_BRICK, MapColor.ORANGE_STAINED_HARDENED_CLAY) {
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addShapedRecipe(block.getStack(BLOCK),
+            CraftingPlugin.addShapedRecipe(block.getStack(POLISHED),
                     "BM",
                     "MB",
                     'B', "ingotBrick",
                     'M', new ItemStack(Blocks.SAND, 1, 1));
         }
     },
-    NETHER(RailcraftBlocks.BRICK_NETHER, MapColor.NETHERRACK) {
+    NETHER(RailcraftBlocks.NETHER_BRICK, MapColor.NETHERRACK) {
         @Override
         public ItemStack getStack(int qty, @Nullable IVariantEnum variant) {
-            if (variant == BrickVariant.BRICK)
+            if (variant == BrickVariant.PAVER)
                 return new ItemStack(Blocks.NETHER_BRICK, qty);
             return super.getStack(qty, variant);
         }
 
         @Override
         public @Nullable IBlockState getState(@Nullable BrickVariant variant) {
-            if (variant == BrickVariant.BRICK)
+            if (variant == BrickVariant.PAVER)
                 return Blocks.NETHER_BRICK.getDefaultState();
             return super.getState(variant);
         }
 
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addFurnaceRecipe(new ItemStack(Blocks.NETHER_BRICK), block.getStack(BLOCK), 0);
+            CraftingPlugin.addFurnaceRecipe(new ItemStack(Blocks.NETHER_BRICK), block.getStack(POLISHED), 0);
         }
 
         @Override
         protected void initVariant(BlockBrick block, BrickVariant variant) {
-            if (variant != BrickVariant.BRICK)
+            if (variant != BrickVariant.PAVER)
                 super.initVariant(block, variant);
         }
 
     },
-    REDNETHER(RailcraftBlocks.BRICK_RED_NETHER, MapColor.NETHERRACK) {
+    RED_NETHER(RailcraftBlocks.RED_NETHER_BRICK, MapColor.NETHERRACK) {
         @Override
         public ItemStack getStack(int qty, @Nullable IVariantEnum variant) {
-            if (variant == BrickVariant.BRICK)
+            if (variant == BrickVariant.PAVER)
                 return new ItemStack(Blocks.RED_NETHER_BRICK, qty);
             return super.getStack(qty, variant);
         }
 
         @Override
         public @Nullable IBlockState getState(@Nullable BrickVariant variant) {
-            if (variant == BrickVariant.BRICK)
+            if (variant == BrickVariant.PAVER)
                 return Blocks.RED_NETHER_BRICK.getDefaultState();
             return super.getState(variant);
         }
 
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addFurnaceRecipe(new ItemStack(Blocks.RED_NETHER_BRICK), block.getStack(BLOCK), 0);
+            CraftingPlugin.addFurnaceRecipe(new ItemStack(Blocks.RED_NETHER_BRICK), block.getStack(POLISHED), 0);
         }
 
         @Override
         protected void initVariant(BlockBrick block, BrickVariant variant) {
-            if (variant != BrickVariant.BRICK)
+            if (variant != BrickVariant.PAVER)
                 super.initVariant(block, variant);
         }
 
     },
-    ANDESITE(RailcraftBlocks.BRICK_ANDESITE, MapColor.STONE) {
+    ANDESITE(RailcraftBlocks.ANDESITE_BRICK, MapColor.STONE) {
         @Override
         public ItemStack getStack(int qty, @Nullable IVariantEnum variant) {
-            if (variant == BrickVariant.BLOCK)
+            if (variant == BrickVariant.POLISHED)
                 return new ItemStack(Blocks.STONE, qty, 6);
             return super.getStack(qty, variant);
         }
 
         @Override
         public @Nullable IBlockState getState(@Nullable BrickVariant variant) {
-            if (variant == BrickVariant.BLOCK)
+            if (variant == BrickVariant.POLISHED)
                 return Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.ANDESITE_SMOOTH);
             return super.getState(variant);
         }
 
         @Override
         protected void initVariant(BlockBrick block, BrickVariant variant) {
-            if (variant != BrickVariant.BLOCK)
+            if (variant != BrickVariant.POLISHED)
                 super.initVariant(block, variant);
         }
     },
-    DIORITE(RailcraftBlocks.BRICK_DIORITE, MapColor.QUARTZ) {
+    DIORITE(RailcraftBlocks.DIORITE_BRICK, MapColor.QUARTZ) {
         @Override
         public ItemStack getStack(int qty, @Nullable IVariantEnum variant) {
-            if (variant == BrickVariant.BLOCK)
+            if (variant == BrickVariant.POLISHED)
                 return new ItemStack(Blocks.STONE, qty, 4);
             return super.getStack(qty, variant);
         }
 
         @Override
         public @Nullable IBlockState getState(@Nullable BrickVariant variant) {
-            if (variant == BrickVariant.BLOCK)
+            if (variant == BrickVariant.POLISHED)
                 return Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.DIORITE_SMOOTH);
             return super.getState(variant);
         }
 
         @Override
         protected void initVariant(BlockBrick block, BrickVariant variant) {
-            if (variant != BrickVariant.BLOCK)
+            if (variant != BrickVariant.POLISHED)
                 super.initVariant(block, variant);
         }
     },
-    GRANITE(RailcraftBlocks.BRICK_GRANITE, MapColor.DIRT) {
+    GRANITE(RailcraftBlocks.GRANITE_BRICK, MapColor.DIRT) {
         @Override
         public ItemStack getStack(int qty, @Nullable IVariantEnum variant) {
-            if (variant == BrickVariant.BLOCK)
+            if (variant == BrickVariant.POLISHED)
                 return new ItemStack(Blocks.STONE, qty, 2);
             return super.getStack(qty, variant);
         }
 
         @Override
         public @Nullable IBlockState getState(@Nullable BrickVariant variant) {
-            if (variant == BrickVariant.BLOCK)
+            if (variant == BrickVariant.POLISHED)
                 return Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.GRANITE_SMOOTH);
             return super.getState(variant);
         }
 
         @Override
         protected void initVariant(BlockBrick block, BrickVariant variant) {
-            if (variant != BrickVariant.BLOCK)
+            if (variant != BrickVariant.POLISHED)
                 super.initVariant(block, variant);
         }
     },
-    PEARLIZED(RailcraftBlocks.BRICK_PEARLIZED, MapColor.GREEN) {
+    PEARLIZED(RailcraftBlocks.PEARLIZED_BRICK, MapColor.GREEN) {
         @Override
         public void initRecipes(BlockBrick block) {
-            CraftingPlugin.addShapedRecipe(block.getStack(8, BLOCK),
+            CraftingPlugin.addShapedRecipe(block.getStack(8, POLISHED),
                     "SSS",
                     "SPS",
                     "SSS",
@@ -262,7 +255,7 @@ public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
     private final Definition def;
 
     BrickTheme(RailcraftBlocks container, MapColor mapColor) {
-        this.def = new Definition(this, "brick_" + name().toLowerCase(Locale.ROOT), null);
+        this.def = new Definition("brick_" + name().toLowerCase(Locale.ROOT));
         this.container = container;
         this.mapColor = mapColor;
         conditions().add(container);
@@ -281,6 +274,7 @@ public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
         return mapColor;
     }
 
+    @Override
     public final RailcraftBlocks getContainer() {
         return container;
     }
@@ -296,7 +290,7 @@ public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
         BlockBrick block = getBlock();
         block.checkVariant(variant);
         if (variant != null)
-            return block.getDefaultState().withProperty(block.getVariantProperty(), variant);
+            return block.getDefaultState().withProperty(block.getVariantEnumProperty(), variant);
         return null;
     }
 
@@ -351,5 +345,10 @@ public enum BrickTheme implements IRailcraftObjectContainer<IRailcraftBlock> {
     @Override
     public boolean isLoaded() {
         return container.isLoaded();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return container.isEnabled();
     }
 }

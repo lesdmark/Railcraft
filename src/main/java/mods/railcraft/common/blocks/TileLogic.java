@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -11,26 +11,35 @@
 package mods.railcraft.common.blocks;
 
 import buildcraft.api.statements.IActionExternal;
+import mods.railcraft.common.blocks.interfaces.IDropsInv;
+import mods.railcraft.common.blocks.interfaces.ITileCompare;
 import mods.railcraft.common.blocks.logic.ILogicContainer;
 import mods.railcraft.common.blocks.logic.InventoryLogic;
 import mods.railcraft.common.blocks.logic.Logic;
 import mods.railcraft.common.blocks.logic.StructureLogic;
+import mods.railcraft.common.fluids.IFluidHandlerImplementor;
 import mods.railcraft.common.gui.EnumGui;
 import mods.railcraft.common.plugins.buildcraft.actions.IActionReceptor;
 import mods.railcraft.common.plugins.forge.PlayerPlugin;
-import mods.railcraft.common.util.inventory.InvTools;
+import mods.railcraft.common.plugins.forge.WorldPlugin;
 import mods.railcraft.common.util.misc.Game;
 import mods.railcraft.common.util.network.RailcraftInputStream;
 import mods.railcraft.common.util.network.RailcraftOutputStream;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
+import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +52,7 @@ import java.util.Optional;
  *
  * @author CovertJaguar <http://www.railcraft.info>
  */
-public abstract class TileLogic extends TileRailcraftTicking implements ISmartTile, IActionReceptor, ILogicContainer {
+public abstract class TileLogic extends TileRailcraftTicking implements ISmartTile, IActionReceptor, ILogicContainer, ITileCompare {
     private Logic logic;
 
     protected void setLogic(Logic logic) {
@@ -64,6 +73,30 @@ public abstract class TileLogic extends TileRailcraftTicking implements ISmartTi
 
     @Override
     @OverridingMethodsMustInvokeSuper
+    public void onBlockPlacedBy(IBlockState state, @Nullable EntityLivingBase placer, ItemStack stack) {
+        super.onBlockPlacedBy(state, placer, stack);
+        logic.placed(state, placer, stack);
+    }
+
+    @Override
+    @OverridingMethodsMustInvokeSuper
+    public void onNeighborBlockChange(IBlockState ourState, Block neighborBlock, BlockPos fromPos) {
+        super.onNeighborBlockChange(ourState, neighborBlock, fromPos);
+        if (Game.isClient(world)) return;
+        boolean isStructureUpdating = WorldPlugin.getTileEntity(world, fromPos, TileLogic.class)
+                .flatMap(tileLogic -> tileLogic.getLogic(StructureLogic.class))
+                .map(StructureLogic::isUpdatingNeighbors)
+                .orElse(false);
+
+        if (!isStructureUpdating)
+            getLogic(StructureLogic.class).ifPresent(logic -> {
+                if (logic.isPart(neighborBlock) || neighborBlock == Blocks.AIR)
+                    logic.onBlockChange();
+            });
+    }
+
+    @Override
+    @OverridingMethodsMustInvokeSuper
     public void onBlockAdded() {
         if (Game.isClient(world)) return;
         getLogic(StructureLogic.class).ifPresent(StructureLogic::onBlockChange);
@@ -73,11 +106,12 @@ public abstract class TileLogic extends TileRailcraftTicking implements ISmartTi
     @OverridingMethodsMustInvokeSuper
     public void onBlockRemoval() {
         if (Game.isClient(world)) return;
+        getLogic(IDropsInv.class).ifPresent(i -> i.spewInventory(world, getPos()));
         getLogic(StructureLogic.class).ifPresent(StructureLogic::onBlockChange);
-        getLogic(IInventory.class).ifPresent(i -> InvTools.spewInventory(i, world, getPos()));
     }
 
     @Override
+    @OverridingMethodsMustInvokeSuper
     public boolean blockActivated(EntityPlayer player, EnumHand hand, EnumFacing side, float hitX, float hitY, float hitZ) {
         if (PlayerPlugin.doesItemBlockActivation(player, hand))
             return false;
@@ -88,6 +122,7 @@ public abstract class TileLogic extends TileRailcraftTicking implements ISmartTi
     @OverridingMethodsMustInvokeSuper
     public void onLoad() {
         super.onLoad();
+        if (Game.isClient(world)) return;
         getLogic(StructureLogic.class).ifPresent(StructureLogic::onBlockChange);
     }
 
@@ -166,7 +201,12 @@ public abstract class TileLogic extends TileRailcraftTicking implements ISmartTi
 
     @Override
     public boolean canCreatureSpawn(EntityLiving.SpawnPlacementType type) {
-        return getLogic(StructureLogic.class).map(l -> !(l.isStructureValid() && l.getPatternPosition() != null && l.getPatternPosition().getY() < 2)).orElse(true);
+        return getLogic(StructureLogic.class).map(l -> !(l.isStructureValid() && l.getMasterPos().getY() == getY())).orElse(true);
+    }
+
+    @Override
+    public int getComparatorInputOverride() {
+        return getLogic(ITileCompare.class).map(ITileCompare::getComparatorInputOverride).orElse(0);
     }
 
     @Override
@@ -175,7 +215,10 @@ public abstract class TileLogic extends TileRailcraftTicking implements ISmartTi
                 && getLogic(InventoryLogic.class).isPresent())
             return true;
         if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY
-                && getLogic(IFluidHandler.class).isPresent())
+                && getLogic(IFluidHandlerImplementor.class).filter(IFluidHandlerImplementor::isVisible).isPresent())
+            return true;
+        if (capability == CapabilityEnergy.ENERGY
+                && getLogic(IEnergyStorage.class).isPresent())
             return true;
         return super.hasCapability(capability, facing);
     }
@@ -188,9 +231,16 @@ public abstract class TileLogic extends TileRailcraftTicking implements ISmartTi
                 return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(inv.get().getItemHandler(facing));
         }
         if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
-            Optional<IFluidHandler> tank = getLogic(IFluidHandler.class);
-            if (tank.isPresent())
-                return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(tank.get());
+            IFluidHandlerImplementor handler = getLogic(IFluidHandlerImplementor.class)
+                    .filter(IFluidHandlerImplementor::isVisible)
+                    .orElse(null);
+            if (handler != null)
+                return CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY.cast(handler);
+        }
+        if (capability == CapabilityEnergy.ENERGY) {
+            Optional<IEnergyStorage> energy = getLogic(IEnergyStorage.class);
+            if (energy.isPresent())
+                return CapabilityEnergy.ENERGY.cast(energy.get());
         }
         return super.getCapability(capability, facing);
     }

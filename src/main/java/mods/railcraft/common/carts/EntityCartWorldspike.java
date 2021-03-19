@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -11,11 +11,10 @@ package mods.railcraft.common.carts;
 
 import mods.railcraft.api.carts.CartToolsAPI;
 import mods.railcraft.api.carts.IMinecart;
-import mods.railcraft.api.fuel.INeedsFuel;
 import mods.railcraft.client.util.effects.ClientEffects;
-import mods.railcraft.common.core.RailcraftConfig;
 import mods.railcraft.common.core.RailcraftConstants;
 import mods.railcraft.common.gui.EnumGui;
+import mods.railcraft.common.modules.ModuleWorldspikes;
 import mods.railcraft.common.plugins.forge.ChatPlugin;
 import mods.railcraft.common.plugins.forge.DataManagerPlugin;
 import mods.railcraft.common.util.inventory.InvTools;
@@ -24,8 +23,9 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityMinecart;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
@@ -37,11 +37,10 @@ import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public abstract class EntityCartWorldspike extends CartBaseContainer implements IWorldspike, IMinecart, INeedsFuel {
+public abstract class EntityCartWorldspike extends CartBaseContainer implements IWorldspike, IMinecart {
     private static final DataParameter<Boolean> TICKET = DataManagerPlugin.create(DataSerializers.BOOLEAN);
     private static final byte CHUNK_RADIUS = 2;
     private static final byte MAX_CHUNKS = 25;
@@ -74,10 +73,6 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
         setFuel(fuel);
     }
 
-    private boolean hasFuel() {
-        return fuel > 0;
-    }
-
     public boolean hasActiveTicket() {
         return ticket != null || (Game.isClient(world) && hasTicketFlag());
     }
@@ -102,7 +97,7 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
             return;
         }
 
-        if (RailcraftConfig.deleteWorldspikes()) {
+        if (ModuleWorldspikes.config.deleteWorldspikes()) {
             setDead();
             return;
         }
@@ -132,7 +127,7 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
         if (ticket == null)
             requestTicket();
 
-        if (RailcraftConfig.printWorldspikeDebug() && ticket != null) {
+        if (ModuleWorldspikes.config.printDebug && ticket != null) {
             clock++;
             if (clock % 64 == 0) {
                 ChatPlugin.sendLocalizedChatToAllFromServer(world, "%s has a ticket and is ticking at <%.0f,%.0f,%.0f> in dim:%d - logged on tick %d", getName(), posX, posY, posZ, world.provider.getDimension(), world.getWorldTime());
@@ -158,23 +153,8 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
 
     protected abstract @Nullable Ticket getTicketFromForge();
 
-    public boolean usesFuel() {
-        return !getFuelMap().isEmpty();
-    }
-
-    @Override
-    public boolean needsFuel() {
-        if (!usesFuel())
-            return false;
-        ItemStack stack = getStackInSlot(0);
-        return InvTools.isEmpty(stack) || (stack.getMaxStackSize() > 1 && InvTools.sizeOf(stack) <= 1);
-    }
-
-    @Override
-    public abstract Map<Ingredient, Float> getFuelMap();
-
     protected boolean meetsTicketRequirements() {
-        return !isDead && !teleported && disabled <= 0 && (hasFuel() || !usesFuel());
+        return !isDead && !teleported && disabled <= 0 && hasFuel();
     }
 
     protected void releaseTicket() {
@@ -242,7 +222,8 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
     protected void writeEntityToNBT(NBTTagCompound data) {
         super.writeEntityToNBT(data);
 
-        data.setLong("fuel", fuel);
+        if (usesFuel())
+            data.setLong("fuel", fuel);
     }
 
     @Override
@@ -294,11 +275,6 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
     }
 
     @Override
-    public int getSizeInventory() {
-        return usesFuel() ? 1 : 0;
-    }
-
-    @Override
     public int getInventoryStackLimit() {
         return 16;
     }
@@ -317,7 +293,7 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
 
     @Override
     public boolean isItemValidForSlot(int slot, ItemStack stack) {
-        return RailcraftConfig.worldspikesCanInteractWithPipes() && getFuelValue(stack).isPresent();
+        return ModuleWorldspikes.config.interactWithPipes && getFuelValue(stack).isPresent();
     }
 
     @Override
@@ -333,12 +309,18 @@ public abstract class EntityCartWorldspike extends CartBaseContainer implements 
 
     @Override
     protected void openRailcraftGui(EntityPlayer player) {
-        if (needsFuel())
+        if (usesFuel())
             super.openRailcraftGui(player);
     }
 
     @Override
     protected EnumGui getGuiType() {
         return EnumGui.CART_WORLDSPIKE;
+    }
+
+    @Override
+    public Container createContainer(InventoryPlayer playerInventory, EntityPlayer playerIn) {
+        testGUI();
+        return super.createContainer(playerInventory, playerIn);
     }
 }

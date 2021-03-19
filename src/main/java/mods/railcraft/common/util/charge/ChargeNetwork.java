@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -19,10 +19,9 @@ import mods.railcraft.api.charge.IBatteryBlock;
 import mods.railcraft.api.charge.IChargeBlock;
 import mods.railcraft.api.charge.IChargeProtectionItem;
 import mods.railcraft.api.core.CollectionToolsAPI;
-import mods.railcraft.common.core.RailcraftConfig;
 import mods.railcraft.common.items.ModItems;
+import mods.railcraft.common.modules.ModuleCharge;
 import mods.railcraft.common.plugins.forge.WorldPlugin;
-import mods.railcraft.common.util.effects.HostEffects;
 import mods.railcraft.common.util.entity.RCEntitySelectors;
 import mods.railcraft.common.util.entity.RailcraftDamageSource;
 import mods.railcraft.common.util.misc.Game;
@@ -73,7 +72,7 @@ public class ChargeNetwork implements Charge.INetwork {
     }
 
     private void printDebug(String msg, Object... args) {
-        if (RailcraftConfig.printChargeDebug())
+        if (ModuleCharge.config.debug)
             Game.log().msg(Level.INFO, msg, args);
     }
 
@@ -134,6 +133,9 @@ public class ChargeNetwork implements Charge.INetwork {
      * Add the node to the network and clean up any node that used to exist there
      */
     private void addNodeImpl(BlockPos pos, ChargeNode node) {
+        if(!needsNode(pos, node.chargeSpec))
+            return;
+
         ChargeNode oldNode = nodes.put(pos.toImmutable(), node);
 
         // update the battery in the save data tracker
@@ -238,6 +240,9 @@ public class ChargeNetwork implements Charge.INetwork {
 
         @Override
         public boolean add(ChargeNode chargeNode) {
+            if(!chargeNode.isValid())
+                return false;
+
             boolean added = super.add(chargeNode);
             if (added)
                 totalLosses += chargeNode.chargeSpec.getLosses();
@@ -359,6 +364,10 @@ public class ChargeNetwork implements Charge.INetwork {
             return activeBatteries().mapToDouble(BatteryBlock::getPotentialDraw).sum();
         }
 
+        public double getMaxDraw() {
+            return activeBatteries().mapToDouble(BatteryBlock::getMaxDraw).sum();
+        }
+
         public double getEfficiency() {
             return activeBatteries().mapToDouble(BatteryBlock::getEfficiency).average().orElse(1.0);
         }
@@ -372,7 +381,7 @@ public class ChargeNetwork implements Charge.INetwork {
         }
 
         public double getLosses() {
-            return totalLosses * RailcraftConfig.chargeLossMultiplier();
+            return totalLosses * ModuleCharge.config.lossMultiplier;
         }
 
         public double getAverageUsagePerTick() {

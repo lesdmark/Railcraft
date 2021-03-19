@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -17,16 +17,14 @@ import mods.railcraft.common.blocks.RailcraftBlocks;
 import mods.railcraft.common.blocks.machine.TileMachineItem;
 import mods.railcraft.common.carts.ItemCartWorldspike;
 import mods.railcraft.common.core.Railcraft;
-import mods.railcraft.common.core.RailcraftConfig;
 import mods.railcraft.common.core.RailcraftConstants;
 import mods.railcraft.common.gui.EnumGui;
 import mods.railcraft.common.gui.GuiHandler;
+import mods.railcraft.common.modules.ModuleWorldspikes;
 import mods.railcraft.common.plugins.forge.ChatPlugin;
 import mods.railcraft.common.plugins.forge.NBTPlugin;
 import mods.railcraft.common.plugins.forge.PowerPlugin;
 import mods.railcraft.common.plugins.forge.WorldPlugin;
-import mods.railcraft.common.util.collections.ItemMap;
-import mods.railcraft.common.util.effects.EffectManager;
 import mods.railcraft.common.util.inventory.InvTools;
 import mods.railcraft.common.util.misc.ChunkManager;
 import mods.railcraft.common.util.misc.Game;
@@ -81,11 +79,6 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
     }
 
     @Override
-    public int getSizeInventory() {
-        return needsFuel() ? 1 : 0;
-    }
-
-    @Override
     public WorldspikeVariant getMachineType() {
         return WorldspikeVariant.STANDARD;
     }
@@ -134,7 +127,7 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
 
     @Override
     public boolean openGui(EntityPlayer player) {
-        if (needsFuel()) {
+        if (usesFuel()) {
             GuiHandler.openGui(EnumGui.WORLDSPIKE, player, world, getPos());
             return true;
         }
@@ -205,15 +198,11 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
         return !pointPos.equals(BlockPos.ORIGIN);
     }
 
-    public boolean hasFuel() {
-        return fuel > 0;
-    }
-
     @Override
     public List<ItemStack> getDrops(int fortune) {
         List<ItemStack> items = new ArrayList<>();
         ItemStack drop = getMachineType().getStack();
-        if (needsFuel() && hasFuel()) {
+        if (usesFuel() && hasFuel()) {
             NBTTagCompound nbt = new NBTTagCompound();
             nbt.setLong("fuel", fuel);
             drop.setTagCompound(nbt);
@@ -225,7 +214,7 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
     @Override
     public void initFromItem(ItemStack stack) {
         super.initFromItem(stack);
-        if (needsFuel())
+        if (usesFuel())
             fuel = ItemCartWorldspike.getFuel(stack);
     }
 
@@ -238,7 +227,7 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
             return;
         }
 
-        if (RailcraftConfig.deleteWorldspikes()) {
+        if (ModuleWorldspikes.config.deleteWorldspikes()) {
             releaseTicket();
             world.setBlockState(getPos(), Blocks.OBSIDIAN.getDefaultState());
             return;
@@ -254,7 +243,7 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
         if (isTicketInvalid())
             releaseTicket();
 
-        if (needsFuel()) {
+        if (usesFuel()) {
             fuelCycle++;
             if (fuelCycle >= FUEL_CYCLE) {
                 fuelCycle = 0;
@@ -285,7 +274,7 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
         if (!hasActiveTicket())
             requestTicket();
 
-        if (RailcraftConfig.printWorldspikeDebug() && hasActiveTicket())
+        if (ModuleWorldspikes.config.printDebug && hasActiveTicket())
             if (clock % 64 == 0) {
                 int numChunks = chunks == null ? 0 : chunks.size();
                 ChatPlugin.sendLocalizedChatToAllFromServer(world, "%s has loaded %d chunks and is ticking at <%d> in dim:%d - logged on tick %d", getName(), numChunks, getPos(), world.provider.getDimension(), world.getWorldTime());
@@ -326,9 +315,6 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
         }
     }
 
-    public boolean needsFuel() {
-        return !getFuelMap().isEmpty();
-    }
 
     @Override
     public final Map<Ingredient, Float> getFuelMap() {
@@ -336,7 +322,7 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
     }
 
     protected boolean meetsTicketRequirements() {
-        return !powered && (hasFuel() || !needsFuel());
+        return !powered && hasFuel();
     }
 
     protected @Nullable Ticket getTicketFromForge() {
@@ -470,7 +456,7 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
     public void readFromNBT(NBTTagCompound data) {
         super.readFromNBT(data);
 
-        if (needsFuel())
+        if (usesFuel())
             fuel = data.getLong("fuel");
 
         powered = data.getBoolean("powered");
@@ -490,14 +476,14 @@ public class TileWorldspike extends TileMachineItem implements IWorldspike, ISid
 
     @Override
     public int[] getSlotsForFace(EnumFacing side) {
-        if (RailcraftConfig.worldspikesCanInteractWithPipes())
+        if (ModuleWorldspikes.config.interactWithPipes)
             return SLOTS;
         return SLOTS_NO_ACCESS;
     }
 
     @Override
     public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction) {
-        return RailcraftConfig.worldspikesCanInteractWithPipes();
+        return ModuleWorldspikes.config.interactWithPipes;
     }
 
     @Override

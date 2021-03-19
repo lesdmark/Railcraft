@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -19,6 +19,7 @@ import mods.railcraft.common.util.effects.HostEffects;
 import mods.railcraft.common.util.misc.BlinkTick;
 import mods.railcraft.common.util.misc.Game;
 import mods.railcraft.common.util.network.PacketHandler;
+import mods.railcraft.common.util.sounds.RailcraftSoundEvents;
 import net.minecraft.command.CommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.FluidRegistry;
@@ -58,6 +59,10 @@ public final class Railcraft {
     @SidedProxy(modId = Railcraft.MOD_ID, clientSide = "mods.railcraft.client.core.ClientProxy", serverSide = "mods.railcraft.common.core.CommonProxy")
     public static CommonProxy proxy;
     private File configFolder;
+
+    public Railcraft() {
+        MinecraftForge.EVENT_BUS.register(RailcraftSoundEvents.class);
+    }
 
     public static CommonProxy getProxy() {
         return proxy;
@@ -131,6 +136,7 @@ public final class Railcraft {
 
         MinecraftForge.EVENT_BUS.register(new BlinkTick());
         MinecraftForge.EVENT_BUS.register(BetaMessageTickHandler.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(Remapper.class);
     }
 
     @Mod.EventHandler

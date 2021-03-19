@@ -20,7 +20,8 @@ buildscript {
 }
 
 apply plugin: 'net.minecraftforge.gradle.forge'
-apply from: 'api/railcraft/gradle.properties', to: project.ext
+apply plugin: 'idea'
+apply from: 'api-railcraft/gradle.properties', to: project.ext
 
 sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
@@ -37,21 +38,19 @@ if (file("passwords.properties").exists()) {
 }
 
 ext {
-    apiRailcraft = "./api/railcraft/src/main/java"
+    dirApi = "./api-railcraft"
+    dirRelease = "./release"
+    dirLang = "./lang"
     // apiForestry = "./api/forestry"
     // apiThaumcraft = "./api/thaumcraft"
     // apiBuildcraft = "./api/buildcraft"
-    dirLang = "./lang"
 
     dirDest = './build/distributions'
-
-    environment = findProject(":private") == null ? "Dev" : "Release"
 }
 
 println ''
 println '*************************************************************'
 println 'Project Version: ' + project.version
-println 'Environment: ' + project.environment
 println '*************************************************************'
 println ''
 
@@ -67,7 +66,29 @@ minecraft {
 
 def actualRunDir = project.file(minecraft.runDir)
 // Change the 4G in -Xmx4G to your desired max RAM and 4G in -Xms4G to your desired initial RAM
-def optimizedVmArgs = ['-XX:+UseG1GC', '-Xmx4G', '-Xms4G', '-XX:+UnlockExperimentalVMOptions', '-XX:G1NewSizePercent=20', '-XX:G1ReservePercent=20', '-XX:MaxGCPauseMillis=50', '-XX:G1HeapRegionSize=32M']
+
+def optimizedVmArgs = [
+        "-Xms4G",
+        "-Xmx4G",
+        "-XX:+UseG1GC",
+        "-XX:+ParallelRefProcEnabled",
+        "-XX:MaxGCPauseMillis=200",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+DisableExplicitGC",
+        "-XX:+AlwaysPreTouch",
+        "-XX:G1NewSizePercent=30",
+        "-XX:G1MaxNewSizePercent=40",
+        "-XX:G1HeapRegionSize=8M",
+        "-XX:G1ReservePercent=20",
+        "-XX:G1HeapWastePercent=5",
+        "-XX:G1MixedGCCountTarget=4",
+        "-XX:InitiatingHeapOccupancyPercent=15",
+        "-XX:G1MixedGCLiveThresholdPercent=90",
+        "-XX:G1RSetUpdatingPauseTimePercent=5",
+        "-XX:SurvivorRatio=32",
+        "-XX:+PerfDisableSharedMem",
+        "-XX:MaxTenuringThreshold=1"
+]
 def assertionVmArgs = ['-ea:mods.railcraft...', '-ea:net.minecraft...', '-ea:net.minecraftforge...']
 def log4jVmArgs = ['-Dlog4j.configurationFile=' + new File(actualRunDir, 'log4j2.xml').toString()]
 def railcraftDebugArgs = ['-Drailcraft.log.categories=registry,models']
@@ -79,19 +100,55 @@ minecraft {
     serverJvmArgs = combinedVmArgs
 }
 
-sourceSets {
-    main {
-        resources {
-            srcDir project.dirLang
-            exclude '**/Thumbs.db'
-        }
+idea {
+    module {
+        //some extra dirs that should be excluded by IDEA
+        excludeDirs += file('run/')
+        excludeDirs += file('logs/')
+
+//        inheritOutputDirs = false
     }
+}
+
+sourceSets {
     api {
         java {
-            srcDir project.apiRailcraft
+            srcDirs += [
+                    project.dirApi + "/src/api/java"
+            ]
+        }
+    }
+    main {
+        java {
+            srcDirs += [
+                    project.dirRelease + "/src/main/java"
+            ]
+        }
+        resources {
+            exclude '**/Thumbs.db'
+            srcDirs += [
+                    project.dirRelease + "/src/main/resources",
+                    project.dirLang + "/src/main/resources"
+            ]
         }
     }
 }
+
+println ""
+println "Source Sets:"
+println "-- api:"
+sourceSets.api.java.srcDirs.each {
+    println "---- " + it
+}
+println "-- main:"
+sourceSets.main.java.srcDirs.each {
+    println "---- " + it
+}
+println "-- resourses:"
+sourceSets.main.resources.srcDirs.each {
+    println "---- " + it
+}
+println ""
 
 repositories {
     mavenCentral()
@@ -111,16 +168,16 @@ repositories {
 
 configurations {
     api
-    compile.extendsFrom api
+    compileOnly.extendsFrom api
 }
 
 dependencies {
     // forestry
     compileOnly "net.sengir.forestry:forestry_${project.version_minecraft}:${project.version_forestry}:api"
-    runtime "net.sengir.forestry:forestry_${project.version_minecraft}:${project.version_forestry}"
+    runtimeOnly "net.sengir.forestry:forestry_${project.version_minecraft}:${project.version_forestry}"
     // IC2
     api "net.industrial-craft:industrialcraft-2:${project.version_industrialcraft}:api"
-    runtime "net.industrial-craft:industrialcraft-2:${project.version_industrialcraft}"
+    runtimeOnly "net.industrial-craft:industrialcraft-2:${project.version_industrialcraft}"
     // BuildCraft
     compileOnly "com.mod-buildcraft:buildcraft-api:${project.version_buildcraft}"
     // JEI
@@ -129,7 +186,7 @@ dependencies {
     apiCompileOnly "org.jetbrains:annotations:16.0.2"
     compileOnly "org.jetbrains:annotations:16.0.2"
     // libs folder in case
-    compile fileTree(dir: 'lib', include: '*.jar')
+    implementation fileTree(dir: 'lib', include: '*.jar')
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
@@ -173,7 +230,7 @@ runServer {
 
 test {
     useJUnitPlatform()
-    
+
     // listen to events in the test execution lifecycle
     beforeTest { descriptor ->
         logger.lifecycle("Running: $descriptor")
@@ -262,7 +319,7 @@ tasks.withType(Jar) {
     exclude '**/Thumbs.db'
 
     into('mods/railcraft/api') {
-        from project.apiRailcraft + "/LICENSE.md"
+        from project.dirApi + "/LICENSE.md"
     }
 //    into('forestry/api') {
 //        from project.apiForestry + "/LICENSE.txt"
@@ -326,9 +383,9 @@ task signDevJar(type: JarSigner, dependsOn: 'devJar') {
 }
 
 task apiSourceJar(type: Jar) {
-    from project.apiRailcraft
+    from sourceSets.api.java
     include '**/mods/railcraft/api/**/*.java'
-    from project.apiRailcraft + "/LICENSE.md"
+    from project.dirApi + "/LICENSE.md"
     include '**/LICENSE.md'
     destinationDir = file(dirDest)
     classifier = 'api-sources'
@@ -338,7 +395,7 @@ task apiSourceJar(type: Jar) {
 task apiJar(type: Jar) {
     from sourceSets.api.output
     include '**/mods/railcraft/api/**'
-    from project.apiRailcraft + "/LICENSE.md"
+    from project.dirApi + "/LICENSE.md"
     include '**/LICENSE.md'
     destinationDir = file(dirDest)
     classifier = 'api'
@@ -367,8 +424,4 @@ artifacts {
     archives apiJar
     archives devJar
     archives jar
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = "4.10.3"
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -16,6 +16,7 @@ import mods.railcraft.api.items.ActivationBlockingItem;
 import mods.railcraft.common.blocks.tracks.TrackTools;
 import mods.railcraft.common.util.inventory.InvTools;
 import mods.railcraft.common.util.misc.Annotations;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -64,6 +65,16 @@ public final class PlayerPlugin {
                 return player;
         }
         return null;
+    }
+
+    public static EntityPlayer getItemThrower(EntityItem item) {
+        String thrower = item.getThrower();
+        EntityPlayer player = null;
+        if (thrower != null)
+            player = item.world.getPlayerEntityByName(item.getThrower());
+        if (player == null)
+            player = RailcraftFakePlayer.get((WorldServer) item.world, item.getPosition());
+        return player;
     }
 
     public static EntityPlayer getOwnerEntity(GameProfile owner, WorldServer world, BlockPos pos) {
@@ -141,11 +152,11 @@ public final class PlayerPlugin {
     }
 
     public static boolean doesItemBlockActivation(EntityPlayer player, EnumHand hand) {
-        if (player.isSneaking())
-            return false;
+        if (player.isSneaking() || hand == EnumHand.OFF_HAND)
+            return true;
         ItemStack heldItem = player.getHeldItem(hand);
         if (!InvTools.isEmpty(heldItem)) {
-            return TrackTools.isRailItem(heldItem.getItem())
+            return TrackTools.isRail(heldItem)
                     || Annotations.isAnnotatedDeepSearch(ActivationBlockingItem.class, heldItem.getItem());
         }
         return false;

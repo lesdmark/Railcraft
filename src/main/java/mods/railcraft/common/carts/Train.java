@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -13,8 +13,8 @@ import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.MapMaker;
 import mods.railcraft.api.charge.CapabilitiesCharge;
 import mods.railcraft.api.charge.IBatteryCart;
-import mods.railcraft.common.core.RailcraftConfig;
 import mods.railcraft.common.fluids.FluidTools;
+import mods.railcraft.common.modules.ModuleTrains;
 import mods.railcraft.common.plugins.forge.NBTPlugin;
 import mods.railcraft.common.util.collections.Streams;
 import mods.railcraft.common.util.misc.Capabilities;
@@ -73,7 +73,7 @@ public final class Train implements Iterable<EntityMinecart> {
     }
 
     public static void printDebug(String msg, Object... args) {
-        if (RailcraftConfig.printLinkingDebug())
+        if (ModuleTrains.config.debug)
             Game.log().msg(Level.DEBUG, msg, args);
     }
 
@@ -97,6 +97,13 @@ public final class Train implements Iterable<EntityMinecart> {
         };
     }
 
+    /**
+     * Finds and returns a Train object.
+     *
+     * If one is not found, it will create a new instance.
+     *
+     * This function is NOT thread safe and will throw an error if called outside the server thread.
+     */
     public static Optional<Train> get(@Nullable EntityMinecart cart) {
         if (cart == null)
             return Optional.empty();
@@ -118,7 +125,14 @@ public final class Train implements Iterable<EntityMinecart> {
         });
     }
 
-    private static Optional<Train> getTrainRaw(@Nullable EntityMinecart cart) {
+    /**
+     * Finds and returns a Train object only if one has already been created.
+     *
+     * It will not create a new Train instance.
+     *
+     * This function is thread safe.
+     */
+    public static Optional<Train> getExisting(@Nullable EntityMinecart cart) {
         if (cart == null)
             return Optional.empty();
         Optional<Train> train = getManager(cart.world).map(manager -> manager.get(getTrainUUID(cart)));
@@ -160,8 +174,8 @@ public final class Train implements Iterable<EntityMinecart> {
     }
 
     private static Optional<Train> getLongerTrain(EntityMinecart cart1, EntityMinecart cart2) {
-        Optional<Train> train1 = getTrainRaw(cart1);
-        Optional<Train> train2 = getTrainRaw(cart2);
+        Optional<Train> train1 = getExisting(cart1);
+        Optional<Train> train2 = getExisting(cart2);
 
         if (train1.equals(train2))
             return train1;
@@ -207,7 +221,7 @@ public final class Train implements Iterable<EntityMinecart> {
         else
             throw new IllegalStateException("Passed a non-null prev value on an empty train!");
 
-        getTrainRaw(next).filter(t -> t != this).ifPresent(Train::kill);
+        getExisting(next).filter(t -> t != this).ifPresent(Train::kill);
         addTrainTag(next);
 
         LinkageManager lm = LinkageManager.INSTANCE;
@@ -237,7 +251,7 @@ public final class Train implements Iterable<EntityMinecart> {
      */
     public static void killTrain(EntityMinecart cart) {
 //        Game.log(Level.WARN, "Thread: " + Thread.currentThread().getName());
-        getTrainRaw(cart).ifPresent(Train::kill);
+        getExisting(cart).ifPresent(Train::kill);
         removeTrainTag(cart);
     }
 

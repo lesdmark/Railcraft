@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -52,7 +52,7 @@ public class EntityCartTrackRelayer extends CartBaseMaintenancePattern {
         super.onUpdate();
         if (Game.isClient(world))
             return;
-
+        if(getMode() == CartMode.TRANSPORT) return;
         stockItems(SLOT_REPLACE, SLOT_STOCK);
         replace();
     }
@@ -65,7 +65,7 @@ public class EntityCartTrackRelayer extends CartBaseMaintenancePattern {
 
         Block block = WorldPlugin.getBlock(world, pos);
 
-        if (TrackTools.isRailBlock(block)) {
+        if (TrackTools.isRail(block)) {
             ItemStack trackExist = patternInv.getStackInSlot(SLOT_EXIST);
             ItemStack trackStock = getStackInSlot(SLOT_STOCK);
 
@@ -116,4 +116,5 @@ public class EntityCartTrackRelayer extends CartBaseMaintenancePattern {
     protected EnumGui getGuiType() {
         return EnumGui.CART_TRACK_RELAYER;
     }
+
 }

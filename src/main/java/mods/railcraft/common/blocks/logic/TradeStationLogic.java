@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -12,6 +12,7 @@ package mods.railcraft.common.blocks.logic;
 
 import mods.railcraft.api.core.RailcraftFakePlayer;
 import mods.railcraft.common.gui.EnumGui;
+import mods.railcraft.common.plugins.forge.PlayerPlugin;
 import mods.railcraft.common.plugins.forge.VillagerPlugin;
 import mods.railcraft.common.util.entity.EntitySearcher;
 import mods.railcraft.common.util.inventory.InvTools;
@@ -107,9 +108,12 @@ public abstract class TradeStationLogic extends InventoryLogic {
     public boolean interact(EntityPlayer player, EnumHand hand) {
         if (super.interact(player, hand))
             return true;
-        player.addExperience(getXpCollected());
-        clearXp();
-        return true;
+        if (getXpCollected() > 0) {
+            player.addExperience(getXpCollected());
+            clearXp();
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -196,7 +200,7 @@ public abstract class TradeStationLogic extends InventoryLogic {
 
     private void doTrade(IMerchant merchant, MerchantRecipe recipe) {
         EntityPlayer originalCustomer = merchant.getCustomer();
-        merchant.setCustomer(getOwnerEntityOrFake());
+        merchant.setCustomer(PlayerPlugin.getOwnerEntity(adapter.getOwner(), (WorldServer) theWorldAsserted(), getPos()));
         merchant.useRecipe(recipe);
         merchant.setCustomer(originalCustomer);
         ItemStack firstItem = recipe.getItemToBuy();
@@ -209,8 +213,6 @@ public abstract class TradeStationLogic extends InventoryLogic {
                 Game.log().msg(Level.WARN, "Cannot remove second input item!");
         invOutput.addStack(InvTools.copy(recipe.getItemToSell()));
     }
-
-    protected abstract EntityPlayer getOwnerEntityOrFake();
 
     @Override
     @OverridingMethodsMustInvokeSuper

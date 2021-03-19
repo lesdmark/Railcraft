@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -10,23 +10,15 @@
 
 package mods.railcraft.common.util.crafting;
 
-import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.MessageFormatMessage;
+import mods.railcraft.common.util.misc.RailcraftException;
 
 /**
  * Created by CovertJaguar on 4/7/2016 for Railcraft.
  *
  * @author CovertJaguar <http://www.railcraft.info>
  */
-public class InvalidRecipeException extends Exception {
-    private final Message message;
-
-    public InvalidRecipeException(final String messagePattern, final Object... arguments) {
-        super(new MessageFormatMessage(messagePattern, arguments).getFormattedMessage());
-        message = new MessageFormatMessage(messagePattern, arguments);
-    }
-
-    public Message getRawMessage() {
-        return message;
+public class InvalidRecipeException extends RailcraftException {
+    public InvalidRecipeException(String messagePattern, Object... arguments) {
+        super(messagePattern, arguments);
     }
 }

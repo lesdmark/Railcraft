@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -10,18 +10,22 @@
 
 package mods.railcraft.common.blocks.logic;
 
-import mods.railcraft.api.core.INetworkedObject;
+import com.mojang.authlib.GameProfile;
+import mods.railcraft.api.carts.CartToolsAPI;
 import mods.railcraft.api.core.IWorldSupplier;
+import mods.railcraft.common.blocks.TileLogic;
 import mods.railcraft.common.blocks.TileRailcraft;
 import mods.railcraft.common.carts.CartBaseLogic;
 import mods.railcraft.common.gui.EnumGui;
 import mods.railcraft.common.util.collections.Streams;
 import mods.railcraft.common.util.misc.Game;
 import mods.railcraft.common.util.misc.MiscTools;
-import mods.railcraft.common.util.network.IGuiReturnHandler;
 import mods.railcraft.common.util.network.RailcraftInputStream;
 import mods.railcraft.common.util.network.RailcraftOutputStream;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ITickable;
@@ -41,8 +45,7 @@ import java.util.Optional;
 /**
  * The basic logic class.
  */
-public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
-        RailcraftOutputStream>, IWorldNameable, IGuiReturnHandler {
+public class Logic implements ITickable, IWorldNameable, ILogicContainer {
     protected final Adapter adapter;
     private int clock = MiscTools.RANDOM.nextInt();
     private List<Logic> subLogics = new ArrayList<>();
@@ -64,6 +67,7 @@ public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
         this.adapter = adapter;
     }
 
+    @Override
     public <L> Optional<L> getLogic(Class<L> logicClass) {
         if (parentLogic.isPresent())
             return parentLogic.get().getLogic(logicClass);
@@ -112,12 +116,22 @@ public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
         return clock % interval == 0;
     }
 
+    @OverridingMethodsMustInvokeSuper
+    public void placed(IBlockState state, @Nullable EntityLivingBase placer, ItemStack stack) {
+        subLogics.forEach(l -> l.placed(state, placer, stack));
+    }
+
     /**
      * @return true if the interaction resulted in something changing.
      */
     @OverridingMethodsMustInvokeSuper
     public boolean interact(EntityPlayer player, EnumHand hand) {
         return subLogics.stream().map(l -> l.interact(player, hand)).filter(b -> b).findFirst().orElse(false);
+    }
+
+    @OverridingMethodsMustInvokeSuper
+    public void onStructureChanged(boolean isComplete, boolean isMaster, Object[] data) {
+        subLogics.forEach(subLogic -> subLogic.onStructureChanged(isComplete, isMaster, data));
     }
 
     @Override
@@ -235,8 +249,10 @@ public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
 
         abstract Object getContainer();
 
-        @Nullable TileRailcraft tile() {
-            return null;
+        abstract GameProfile getOwner();
+
+        Optional<TileRailcraft> tile() {
+            return Optional.empty();
         }
 
         abstract boolean isUsableByPlayer(EntityPlayer player);
@@ -294,6 +310,11 @@ public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
             }
 
             @Override
+            GameProfile getOwner() {
+                return tile.getOwner();
+            }
+
+            @Override
             void sendUpdateToClient() {
                 tile.sendUpdateToClient();
             }
@@ -303,9 +324,13 @@ public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
                 tile.markBlockForUpdate();
             }
 
+            void notifyNeighbors() {
+                tile.notifyBlocksOfNeighborChange();
+            }
+
             @Override
-            TileRailcraft tile() {
-                return tile;
+            Optional<TileRailcraft> tile() {
+                return Optional.of(tile);
             }
 
             @Override
@@ -316,6 +341,14 @@ public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
 
         public static Adapter.Tile of(TileRailcraft tile) {
             return new Tile(tile);
+        }
+
+        public static Adapter from(ILogicContainer logicContainer) {
+            if (logicContainer instanceof CartBaseLogic)
+                return of((CartBaseLogic) logicContainer);
+            if (logicContainer instanceof TileLogic)
+                return of((TileLogic) logicContainer);
+            throw new IllegalArgumentException("Invalid Logic Container");
         }
 
         public static Adapter of(CartBaseLogic cart) {
@@ -358,6 +391,11 @@ public class Logic implements ITickable, INetworkedObject<RailcraftInputStream,
                 @Override
                 public boolean hasCustomName() {
                     return cart.hasCustomName();
+                }
+
+                @Override
+                GameProfile getOwner() {
+                    return CartToolsAPI.getCartOwner(cart);
                 }
 
                 @Override

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -12,7 +12,7 @@ package mods.railcraft.common.blocks.machine.worldspike;
 
 import mods.railcraft.common.blocks.BlockMeta;
 import mods.railcraft.common.blocks.machine.BlockMachine;
-import mods.railcraft.common.core.RailcraftConfig;
+import mods.railcraft.common.modules.ModuleWorldspikes;
 import mods.railcraft.common.plugins.forge.CraftingPlugin;
 import mods.railcraft.common.plugins.forge.WorldPlugin;
 import net.minecraft.block.SoundType;
@@ -57,7 +57,7 @@ public class BlockWorldspike extends BlockMachine<WorldspikeVariant> {
     @Override
     @SideOnly(Side.CLIENT)
     public @Nullable StateMapperBase getStateMapper() {
-        return new StateMap.Builder().withName(getVariantProperty()).build();
+        return new StateMap.Builder().withName(getVariantEnumProperty()).build();
     }
 
     @SuppressWarnings("deprecation")
@@ -79,7 +79,7 @@ public class BlockWorldspike extends BlockMachine<WorldspikeVariant> {
 
     @Override
     protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, getVariantProperty(), ENABLED);
+        return new BlockStateContainer(this, getVariantEnumProperty(), ENABLED);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class BlockWorldspike extends BlockMachine<WorldspikeVariant> {
     @Override
     public void defineRecipes() {
         WorldspikeVariant worldspike = WorldspikeVariant.STANDARD;
-        if (worldspike.isAvailable() && RailcraftConfig.canCraftStandardWorldspikes()) {
+        if (worldspike.isAvailable() && ModuleWorldspikes.config.canCraftStandardWorldspikes()) {
             CraftingPlugin.addShapedRecipe(worldspike.getStack(),
                     "gog",
                     "dpd",
@@ -105,7 +105,7 @@ public class BlockWorldspike extends BlockMachine<WorldspikeVariant> {
         }
 
         worldspike = WorldspikeVariant.PERSONAL;
-        if (worldspike.isAvailable() && RailcraftConfig.canCraftPersonalWorldspikes()) {
+        if (worldspike.isAvailable() && ModuleWorldspikes.config.canCraftPersonalWorldspikes()) {
             CraftingPlugin.addShapedRecipe(worldspike.getStack(),
                     "gog",
                     "dpd",
@@ -117,7 +117,7 @@ public class BlockWorldspike extends BlockMachine<WorldspikeVariant> {
         }
 
         worldspike = WorldspikeVariant.PASSIVE;
-        if (worldspike.isAvailable() && RailcraftConfig.canCraftPassiveWorldspikes()) {
+        if (worldspike.isAvailable() && ModuleWorldspikes.config.canCraftPassiveWorldspikes()) {
             CraftingPlugin.addShapedRecipe(worldspike.getStack(),
                     "gog",
                     "dpd",

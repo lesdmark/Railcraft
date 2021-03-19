@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -90,7 +90,7 @@ public enum RailcraftCarts implements IRailcraftCartContainer {
     PUMPKIN(3, "cart_pumpkin", EntityCartPumpkin.class, EntityCartPumpkin::new, ItemCartPumpkin::new),
     REDSTONE_FLUX(0, "cart_redstone_flux", EntityCartRF.class, EntityCartRF::new, ItemCartRF::new),
     TANK(0, "cart_tank", EntityCartTank.class, EntityCartTank::new, ItemCartTank::new, () -> {
-        ItemStack stack = RailcraftBlocks.TANK_IRON_GAUGE.getStack();
+        ItemStack stack = RailcraftBlocks.GLASS.getStack();
         return !InvTools.isEmpty(stack) ? stack : new ItemStack(Blocks.GLASS, 8);
     }),
     TNT_WOOD(0, "cart_tnt_wood", EntityCartTNTWood.class, EntityCartTNTWood::new, ItemCartTNTWood::new),
@@ -174,7 +174,7 @@ public enum RailcraftCarts implements IRailcraftCartContainer {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-        this.def = new Definition(this, tag, null);
+        this.def = new Definition(tag);
         this.itemSupplier = itemSupplier;
         this.contentsSupplier = contentsSupplier;
         this.id = entityId;

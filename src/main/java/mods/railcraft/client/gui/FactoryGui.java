@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -13,7 +13,6 @@ import mods.railcraft.common.blocks.TileRailcraft;
 import mods.railcraft.common.blocks.detector.TileDetector;
 import mods.railcraft.common.blocks.interfaces.ITileAspectResponder;
 import mods.railcraft.common.blocks.logic.*;
-import mods.railcraft.common.blocks.machine.ITankTile;
 import mods.railcraft.common.blocks.machine.equipment.TileFeedStation;
 import mods.railcraft.common.blocks.machine.equipment.TileRollingMachine;
 import mods.railcraft.common.blocks.machine.equipment.TileRollingMachinePowered;
@@ -23,12 +22,12 @@ import mods.railcraft.common.blocks.machine.wayobjects.boxes.TileBoxAnalog;
 import mods.railcraft.common.blocks.machine.wayobjects.boxes.TileBoxCapacitor;
 import mods.railcraft.common.blocks.machine.wayobjects.boxes.TileBoxController;
 import mods.railcraft.common.blocks.machine.worldspike.TileWorldspike;
-import mods.railcraft.common.blocks.multi.TileBoilerFireboxFluid;
-import mods.railcraft.common.blocks.multi.TileBoilerFireboxSolid;
-import mods.railcraft.common.blocks.multi.TileMultiBlock;
-import mods.railcraft.common.blocks.multi.TileSteamTurbine;
 import mods.railcraft.common.blocks.single.TileEngineSteam;
 import mods.railcraft.common.blocks.single.TileEngineSteamHobby;
+import mods.railcraft.common.blocks.structures.TileBoilerFireboxFluid;
+import mods.railcraft.common.blocks.structures.TileBoilerFireboxSolid;
+import mods.railcraft.common.blocks.structures.TileMultiBlock;
+import mods.railcraft.common.blocks.structures.TileSteamTurbine;
 import mods.railcraft.common.blocks.tracks.outfitted.TileTrackOutfitted;
 import mods.railcraft.common.blocks.tracks.outfitted.kits.*;
 import mods.railcraft.common.carts.*;
@@ -102,7 +101,7 @@ public class FactoryGui {
                 case STEAM_OVEN:
                     return new GuiSteamOven(inv, Logic.get(SteamOvenLogic.class, obj));
                 case TANK:
-                    return new GuiTank(inv, (ITankTile) obj);
+                    return new GuiTank(inv, (ILogicContainer) obj);
                 case ROCK_CRUSHER:
                     return new GuiRockCrusher(inv, Logic.get(RockCrusherLogic.class, obj));
                 case ROLLING_MACHINE_MANUAL:

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -57,7 +57,7 @@ public class BlockDetector extends BlockContainerRailcraftSubtyped<TileDetector,
         setResistance(4.5F);
         setHardness(2.0F);
         setSoundType(SoundType.STONE);
-        setDefaultState(blockState.getBaseState().withProperty(FRONT, NORTH).withProperty(POWERED, false).withProperty(getVariantProperty(), EnumDetector.ANY));
+        setDefaultState(blockState.getBaseState().withProperty(FRONT, NORTH).withProperty(POWERED, false).withProperty(getVariantEnumProperty(), EnumDetector.ANY));
 
         setCreativeTab(CreativeTabs.TRANSPORTATION);
 
@@ -167,7 +167,7 @@ public class BlockDetector extends BlockContainerRailcraftSubtyped<TileDetector,
                     "XXX",
                     "XPX",
                     "XXX",
-                    'X', BrickTheme.INFERNAL.getStack(1, BrickVariant.BRICK),
+                    'X', BrickTheme.INFERNAL.getStack(1, BrickVariant.PAVER),
                     'P', Blocks.STONE_PRESSURE_PLATE);
     }
 
@@ -189,7 +189,7 @@ public class BlockDetector extends BlockContainerRailcraftSubtyped<TileDetector,
 
     @Override
     protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, getVariantProperty(), FRONT, POWERED);
+        return new BlockStateContainer(this, getVariantEnumProperty(), FRONT, POWERED);
     }
 
     @SuppressWarnings("deprecation")
@@ -198,7 +198,7 @@ public class BlockDetector extends BlockContainerRailcraftSubtyped<TileDetector,
         IBlockState newState = super.getActualState(state, worldIn, pos);
         return getTileEntity(state, worldIn, pos)
                 .map(t -> newState
-                        .withProperty(getVariantProperty(), t.getDetector().getType())
+                        .withProperty(getVariantEnumProperty(), t.getDetector().getType())
                         .withProperty(POWERED, t.getPowerState() > PowerPlugin.NO_POWER))
                 .orElse(newState);
     }

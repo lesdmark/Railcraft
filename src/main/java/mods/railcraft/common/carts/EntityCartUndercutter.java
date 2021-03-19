@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -86,7 +86,7 @@ public class EntityCartUndercutter extends CartBaseMaintenancePattern {
         super.onUpdate();
         if (Game.isClient(world))
             return;
-
+        if(getMode() == CartMode.TRANSPORT) return;
         stockItems(SLOT_REPLACE_UNDER, SLOT_STOCK_UNDER);
         stockItems(SLOT_REPLACE_SIDE, SLOT_STOCK_SIDE);
 
@@ -96,7 +96,7 @@ public class EntityCartUndercutter extends CartBaseMaintenancePattern {
 
         IBlockState state = WorldPlugin.getBlockState(world, pos);
 
-        if (TrackTools.isRailBlock(state)) {
+        if (TrackTools.isRail(state)) {
             BlockRailBase.EnumRailDirection trackShape = TrackTools.getTrackDirection(world, pos, state, this);
             pos = pos.down();
 

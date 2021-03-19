@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -12,14 +12,16 @@ package mods.railcraft.client.render.tesr;
 import mods.railcraft.client.render.models.resource.FluidModelRenderer;
 import mods.railcraft.client.render.tools.OpenGL;
 import mods.railcraft.client.render.tools.RenderTools;
-import mods.railcraft.common.blocks.multi.TileTankBase;
-import mods.railcraft.common.blocks.multi.TileTankIronValve;
+import mods.railcraft.common.blocks.logic.FluidLogic;
+import mods.railcraft.common.blocks.logic.StructureLogic;
+import mods.railcraft.common.blocks.logic.ValveLogic;
+import mods.railcraft.common.blocks.structures.TileTank;
 import mods.railcraft.common.core.RailcraftConfig;
-import mods.railcraft.common.fluids.TankManager;
 import mods.railcraft.common.fluids.tanks.StandardTank;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
@@ -27,24 +29,25 @@ import org.lwjgl.opengl.GL11;
 /**
  * @author CovertJaguar <http://www.railcraft.info>
  */
-public final class TESRHollowTank extends TileEntitySpecialRenderer<TileTankBase> {
+public final class TESRHollowTank extends TileEntitySpecialRenderer<TileTank> {
+    private static float FILL_SCALE = 0.5F;
 
-    private float getVerticalScaleSide(TileTankBase tile) {
-        int y = tile.getPatternPosition().getY();
+    private float getVerticalScaleSide(StructureLogic structure) {
+        int y = structure.getPatternPosition().getY();
         if (!RailcraftConfig.allowTankStacking())
             y--;
         return y - RenderTools.PIXEL * 5;
     }
 
-    private int getTankHeight(TileTankBase tile) {
-        int height = tile.getPattern().getPatternHeight();
+    private int getTankHeight(StructureLogic structure) {
+        int height = structure.getPattern().getPatternHeight();
         if (!RailcraftConfig.allowTankStacking())
             height -= 2;
         return height;
     }
 
-    private void draw(FluidStack fluidStack, int skyLight, int blockLight) {
-        preGL(skyLight, blockLight);
+    private void draw(FluidStack fluidStack, BlockPos pos) {
+        preGL(fluidStack, pos);
 
         OpenGL.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -56,7 +59,9 @@ public final class TESRHollowTank extends TileEntitySpecialRenderer<TileTankBase
         postGL();
     }
 
-    private void preGL(int skyLight, int blockLight) {
+    private void preGL(FluidStack fluidStack, BlockPos pos) {
+        int skyLight = getWorld().getLightFor(EnumSkyBlock.SKY, pos);
+        int blockLight = Math.max(getWorld().getLightFor(EnumSkyBlock.BLOCK, pos), fluidStack.getFluid().getLuminosity(fluidStack));
         OpenGL.glPushMatrix();
         OpenGL.glPushAttrib(GL11.GL_ENABLE_BIT);
         OpenGL.glEnable(GL11.GL_CULL_FACE);
@@ -75,120 +80,114 @@ public final class TESRHollowTank extends TileEntitySpecialRenderer<TileTankBase
     }
 
     @Override
-    public void render(TileTankBase tile, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
-        if (!tile.isStructureValid())
-            return;
+    public void render(TileTank tile, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
+        tile.getLogic(StructureLogic.class).filter(StructureLogic::isStructureValid).ifPresent(structure -> {
 
-        int skyLight = getWorld().getLightFor(EnumSkyBlock.SKY, tile.getPos().up());
-        int blockLight = getWorld().getLightFor(EnumSkyBlock.BLOCK, tile.getPos().up());
-
-        if (tile instanceof TileTankIronValve) {
-            TileTankIronValve valve = (TileTankIronValve) tile;
-            StandardTank fillTank = valve.getFillTank();
-            FluidStack fillStack = fillTank.getFluid();
-            if (fillStack != null && fillStack.amount > 0) {
-                blockLight = Math.max(blockLight, fillStack.getFluid().getLuminosity(fillStack));
-                OpenGL.glPushMatrix();
-                if (valve.getPattern().getPatternMarkerChecked(valve.getPatternPosition().down()) == 'A') {
+            structure.getLogic(ValveLogic.class).ifPresent(valve -> {
+                StandardTank fillTank = valve.getFillTank();
+                FluidStack fillStack = fillTank.getFluid();
+                if (fillStack != null && fillStack.amount > 0) {
+                    OpenGL.glPushMatrix();
+                    if (structure.getPattern().getPatternMarkerChecked(structure.getPatternPosition().down()) == 'A') {
 
 //                    prepFillTexture(fillStack);
 
-                    int height = getTankHeight(valve);
-                    float yOffset = height / 2f;
-                    float vScale = height - 2f;
-                    OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset - height + 1, (float) z + 0.5F);
-                    OpenGL.glScalef(1f, vScale, 1f);
+                        int height = getTankHeight(structure);
+                        float yOffset = height / 2f;
+                        float vScale = height;
+                        OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset - height + 1, (float) z + 0.5F);
+                        OpenGL.glScalef(FILL_SCALE, vScale, FILL_SCALE);
 
-                    draw(fillStack, skyLight, blockLight);
-                } else if (valve.getPattern().getPatternMarkerChecked(valve.getPatternPosition().add(-1, 0, 0)) == 'A') {
-
-//                    prepFillTexture(fillStack);
-
-                    float vScale = getVerticalScaleSide(valve);
-                    float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
-                    OpenGL.glTranslatef((float) x - 0.5F + RenderTools.PIXEL * 5, (float) y + yOffset, (float) z + 0.5F);
-                    OpenGL.glScalef(1f, vScale, 1f);
-
-                    draw(fillStack, skyLight, blockLight);
-                } else if (valve.getPattern().getPatternMarkerChecked(valve.getPatternPosition().add(1, 0, 0)) == 'A') {
+                        draw(fillStack, tile.getPos().down());
+                    } else if (structure.getPattern().getPatternMarkerChecked(structure.getPatternPosition().west()) == 'A') {
 
 //                    prepFillTexture(fillStack);
 
-                    float vScale = getVerticalScaleSide(valve);
-                    float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
-                    OpenGL.glTranslatef((float) x + 1.5F - RenderTools.PIXEL * 5, (float) y + yOffset, (float) z + 0.5F);
-                    OpenGL.glScalef(1f, vScale, 1f);
+                        float vScale = getVerticalScaleSide(structure);
+                        float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
+                        OpenGL.glTranslatef((float) x - 0.5F + RenderTools.PIXEL * 5, (float) y + yOffset, (float) z + 0.5F);
+                        OpenGL.glScalef(FILL_SCALE, vScale, FILL_SCALE);
 
-                    draw(fillStack, skyLight, blockLight);
-                } else if (valve.getPattern().getPatternMarkerChecked(valve.getPatternPosition().add(0, 0, -1)) == 'A') {
-
-//                    prepFillTexture(fillStack);
-
-                    float vScale = getVerticalScaleSide(valve);
-                    float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
-                    OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset, (float) z - 0.5F + RenderTools.PIXEL * 5);
-                    OpenGL.glScalef(1f, vScale, 1f);
-
-                    draw(fillStack, skyLight, blockLight);
-                } else if (valve.getPattern().getPatternMarkerChecked(valve.getPatternPosition().add(0, 0, 1)) == 'A') {
+                        draw(fillStack, tile.getPos().west());
+                    } else if (structure.getPattern().getPatternMarkerChecked(structure.getPatternPosition().east()) == 'A') {
 
 //                    prepFillTexture(fillStack);
 
-                    float vScale = getVerticalScaleSide(valve);
-                    float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
-                    OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset, (float) z + 1.5F - RenderTools.PIXEL * 5);
-                    OpenGL.glScalef(1f, vScale, 1f);
+                        float vScale = getVerticalScaleSide(structure);
+                        float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
+                        OpenGL.glTranslatef((float) x + 1.5F - RenderTools.PIXEL * 5, (float) y + yOffset, (float) z + 0.5F);
+                        OpenGL.glScalef(FILL_SCALE, vScale, FILL_SCALE);
 
-                    draw(fillStack, skyLight, blockLight);
+                        draw(fillStack, tile.getPos().east());
+                    } else if (structure.getPattern().getPatternMarkerChecked(structure.getPatternPosition().north()) == 'A') {
+
+//                    prepFillTexture(fillStack);
+
+                        float vScale = getVerticalScaleSide(structure);
+                        float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
+                        OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset, (float) z - 0.5F + RenderTools.PIXEL * 5);
+                        OpenGL.glScalef(FILL_SCALE, vScale, FILL_SCALE);
+
+                        draw(fillStack, tile.getPos().north());
+                    } else if (structure.getPattern().getPatternMarkerChecked(structure.getPatternPosition().south()) == 'A') {
+
+//                    prepFillTexture(fillStack);
+
+                        float vScale = getVerticalScaleSide(structure);
+                        float yOffset = 0.5f - vScale / 2f + RenderTools.PIXEL * 3;
+                        OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset, (float) z + 1.5F - RenderTools.PIXEL * 5);
+                        OpenGL.glScalef(FILL_SCALE, vScale, FILL_SCALE);
+
+                        draw(fillStack, tile.getPos().south());
+                    }
+                    OpenGL.glPopMatrix();
                 }
-                OpenGL.glPopMatrix();
-            }
-        }
+            });
 
-        if (!tile.isValidMaster() || tile.isInvalid())
-            return;
-        int height = getTankHeight(tile);
-        float yOffset = height / 2f;
-        float vScale = height - 2;
-        float hScale = tile.getPattern().getPatternWidthX() - 2;
+            if (!structure.isValidMaster() || tile.isInvalid())
+                return;
+            int height = getTankHeight(structure);
+            float yOffset = height / 2f;
+            float vScale = height - 2;
+            float hScale = structure.getPattern().getPatternWidthX() - 2;
 
-        TankManager tankManager = tile.getTankManager();
-        if (tankManager.isEmpty())
-            return;
-        StandardTank tank = tankManager.get(0);
-        if (tank == null)
-            return;
+            structure.getFunctionalLogic(FluidLogic.class)
+                    .map(fluidLogic -> fluidLogic.getTankManager().get(0))
+                    .ifPresent(tank -> {
 
-        FluidStack fluidStack = tank.getFluid();
-        if (fluidStack != null && fluidStack.amount > 0) {
-            blockLight = Math.max(blockLight, fluidStack.getFluid().getLuminosity(fluidStack));
-            preGL(skyLight, blockLight);
-            OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset + 0.01f, (float) z + 0.5F);
-            OpenGL.glScalef(hScale, vScale, hScale);
+                        FluidStack fluidStack = tank.getFluid();
+                        if (fluidStack != null && fluidStack.amount > 0) {
+                            preGL(fluidStack, tile.getPos().up());
+                            OpenGL.glTranslatef((float) x + 0.5F, (float) y + yOffset + 0.01f, (float) z + 0.5F);
+                            OpenGL.glScalef(hScale, vScale, hScale);
 
-            OpenGL.glScalef(0.999f, 1, 0.999f);
+                            OpenGL.glScalef(0.999f, 1, 0.999f);
 //            int[] displayLists = FluidRenderer.getLiquidDisplayLists(fluidStack); this broke
 //            OpenGL.glPushMatrix();
 
-            //
-            OpenGL.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+                            //
+                            OpenGL.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-            float cap = tank.getCapacity();
+                            float cap = tank.getCapacity();
 
-            OpenGL.glTranslatef(-0.5F, -0.501F, -0.5F);
+                            OpenGL.glTranslatef(-0.5F, -0.501F, -0.5F);
 
-            float level = Math.min(fluidStack.amount / cap, cap);
+                            float level = Math.min(fluidStack.amount / cap, 1.0F);
 
-            FluidModelRenderer.INSTANCE.renderFluid(fluidStack, Math.min(16, (int) Math.ceil(level * 16F)));
+                            FluidModelRenderer.INSTANCE.renderFluid(fluidStack, Math.min(16, (int) Math.ceil(level * 16F)));
 
-            //
+                            //
 
 //            bindTexture(FluidRenderer.getFluidSheet(fluidStack));
 //            FluidRenderer.setColorForFluid(fluidStack);
 //            OpenGL.glCallList(displayLists[(int) (level * (float) (FluidRenderer.DISPLAY_STAGES - 1))]);
 
-            postGL();
+                            postGL();
 //            OpenGL.glPopMatrix();
-        }
+
+
+                        }
+                    });
+        });
     }
 }

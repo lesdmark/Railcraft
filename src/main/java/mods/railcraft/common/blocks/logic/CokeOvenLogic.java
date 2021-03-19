@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -44,14 +44,15 @@ public class CokeOvenLogic extends SingleInputRecipeCrafterLogic<ICokeOvenCrafte
     public static final int SLOT_OUTPUT = 1;
     public static final int SLOT_OUTPUT_FLUID = 2;
     public static final int SLOT_LIQUID_INPUT = 3;
-    private static final int TANK_CAPACITY = 64 * FluidTools.BUCKET_VOLUME;
+    public static final int TANK_CAPACITY = 64 * FluidTools.BUCKET_VOLUME;
     private final StandardTank tank;
     private final InventoryMapper invOutput = new InventoryMapper(this, SLOT_OUTPUT, 1).ignoreItemChecks();
+    private int multiplier = 1;
 
     public CokeOvenLogic(Adapter adapter) {
         super(adapter, 4, SLOT_INPUT);
-        tank = new StandardTank(TANK_CAPACITY, adapter.tile());
-        addSubLogic(new TankLogic(adapter).addTank(tank));
+        tank = new StandardTank(TANK_CAPACITY, adapter.tile().orElse(null));
+        addSubLogic(new FluidLogic(adapter).addTank(tank));
     }
 
     @Override
@@ -61,6 +62,14 @@ public class CokeOvenLogic extends SingleInputRecipeCrafterLogic<ICokeOvenCrafte
 
     @Override
     protected boolean craftAndPush() {
+        boolean crafted = false;
+        for (int ii = 0; ii < multiplier; ii++) {
+            crafted |= craftAndPushImp();
+        }
+        return crafted;
+    }
+
+    private boolean craftAndPushImp() {
         Objects.requireNonNull(recipe);
         ItemStack output = recipe.getOutput();
         FluidStack fluidOutput = recipe.getFluidOutput();
@@ -92,6 +101,12 @@ public class CokeOvenLogic extends SingleInputRecipeCrafterLogic<ICokeOvenCrafte
 
         if (clock(FluidTools.BUCKET_FILL_TIME))
             FluidTools.fillContainers(tank, this, SLOT_LIQUID_INPUT, SLOT_OUTPUT_FLUID, Fluids.CREOSOTE.get());
+    }
+
+    @Override
+    public void onStructureChanged(boolean isComplete, boolean isMaster, Object[] data) {
+        super.onStructureChanged(isComplete, isMaster, data);
+        multiplier = (Integer) data[1];
     }
 
     @Override

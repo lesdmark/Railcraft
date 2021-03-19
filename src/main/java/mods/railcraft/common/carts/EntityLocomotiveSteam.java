@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -11,12 +11,13 @@ package mods.railcraft.common.carts;
 
 import mods.railcraft.api.carts.IFluidCart;
 import mods.railcraft.client.util.effects.ClientEffects;
-import mods.railcraft.common.core.RailcraftConfig;
 import mods.railcraft.common.fluids.FluidTools;
+import mods.railcraft.common.fluids.FluidTools.ProcessType;
 import mods.railcraft.common.fluids.Fluids;
 import mods.railcraft.common.fluids.TankManager;
 import mods.railcraft.common.fluids.tanks.FilteredTank;
 import mods.railcraft.common.fluids.tanks.StandardTank;
+import mods.railcraft.common.modules.ModuleLocomotives;
 import mods.railcraft.common.plugins.forge.DataManagerPlugin;
 import mods.railcraft.common.plugins.forge.NBTPlugin;
 import mods.railcraft.common.util.inventory.wrappers.InventoryMapper;
@@ -92,7 +93,7 @@ public abstract class EntityLocomotiveSteam extends EntityLocomotive implements 
         invWaterInput.withStackSizeLimit(4);
 
         boiler = new SteamBoiler(tankWater, tankSteam);
-        boiler.setEfficiencyModifier(RailcraftConfig.steamLocomotiveEfficiencyMultiplier());
+        boiler.setEfficiencyModifier(ModuleLocomotives.config.steamLocomotiveEfficiency);
         boiler.setTicksPerCycle(TICKS_PER_BOILER_CYCLE);
     }
 
@@ -157,7 +158,7 @@ public abstract class EntityLocomotiveSteam extends EntityLocomotive implements 
             }
 
             if (update % FluidTools.BUCKET_FILL_TIME == 0)
-                processState = FluidTools.processContainer(invWaterContainers, tankWater, false, processState);
+                processState = FluidTools.processContainer(invWaterContainers, tankWater, ProcessType.DRAIN_ONLY, processState);
 
         } else {
             if (isSmoking()) {

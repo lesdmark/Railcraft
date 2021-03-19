@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -16,7 +16,7 @@ import mods.railcraft.common.advancements.criterion.RailcraftAdvancementTriggers
 import mods.railcraft.common.carts.*;
 import mods.railcraft.common.items.enchantment.RailcraftEnchantments;
 import mods.railcraft.common.modules.ModuleSeasonal;
-import mods.railcraft.common.modules.ModuleTrain;
+import mods.railcraft.common.modules.ModuleTrains;
 import mods.railcraft.common.modules.RailcraftModuleManager;
 import mods.railcraft.common.plugins.forge.ChatPlugin;
 import mods.railcraft.common.plugins.misc.SeasonPlugin;
@@ -76,7 +76,7 @@ public class CrowbarHandler {
                 SeasonPlugin.Season season = ItemCrowbarSeasons.getCurrentSeason(stack);
                 ((IRailcraftCart) cart).setSeason(season);
                 RailcraftAdvancementTriggers.getInstance().onSeasonSet((EntityPlayerMP) thePlayer, cart, season);
-            } else if (RailcraftModuleManager.isModuleEnabled(ModuleTrain.class)
+            } else if (RailcraftModuleManager.isModuleEnabled(ModuleTrains.class)
                     && crowbar.canLink(thePlayer, hand, stack, cart)) {
                 linkCart(thePlayer, hand, stack, cart, crowbar);
             } else if (crowbar.canBoost(thePlayer, hand, stack, cart)) {
@@ -122,20 +122,23 @@ public class CrowbarHandler {
                 // NOOP
             } else if (cart instanceof IDirectionalCart)
                 ((IDirectionalCart) cart).reverse();
-            else {
-                int lvl = RailcraftEnchantments.SMACK.getLevel(stack);
-                if (lvl == 0) {
-                    CartTools.smackCart(cart, player, SMACK_VELOCITY);
+                else if(cart instanceof EntityCartTrackRemover) {
+                    ((EntityCartTrackRemover) cart).setMode(((EntityCartTrackRemover) cart).getOtherMode());
                 }
-
-                Train.get(cart).ifPresent(train -> {
-                    float smackVelocity = SMACK_VELOCITY * (float) Math.pow(1.7, lvl);
-                    smackVelocity /= (float) Math.pow(train.size(), 1D / (1 + lvl));
-                    for (EntityMinecart each : train) {
-                        CartTools.smackCart(cart, each, player, smackVelocity);
+                else {
+                    int lvl = RailcraftEnchantments.SMACK.getLevel(stack);
+                    if (lvl == 0) {
+                        CartTools.smackCart(cart, player, SMACK_VELOCITY);
                     }
-                });
-            }
+
+                    Train.get(cart).ifPresent(train -> {
+                        float smackVelocity = SMACK_VELOCITY * (float) Math.pow(1.7, lvl);
+                        smackVelocity /= (float) Math.pow(train.size(), 1D / (1 + lvl));
+                        for (EntityMinecart each : train) {
+                            CartTools.smackCart(cart, each, player, smackVelocity);
+                        }
+                    });
+                }
         crowbar.onBoost(player, hand, stack, cart);
     }
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -11,9 +11,10 @@ package mods.railcraft.common.blocks.tracks.outfitted.kits;
 
 import mods.railcraft.api.items.IToolCrowbar;
 import mods.railcraft.common.blocks.tracks.outfitted.TrackKits;
-import mods.railcraft.common.core.RailcraftConfig;
+import mods.railcraft.common.carts.CartConstants;
 import mods.railcraft.common.gui.EnumGui;
 import mods.railcraft.common.gui.GuiHandler;
+import mods.railcraft.common.modules.ModuleExtras;
 import mods.railcraft.common.util.misc.SafeNBTWrapper;
 import mods.railcraft.common.util.network.IGuiReturnHandler;
 import mods.railcraft.common.util.network.RailcraftInputStream;
@@ -74,7 +75,7 @@ public class TrackKitLauncher extends TrackKitPowered implements IGuiReturnHandl
             cart.setMaxSpeedAirVertical(0.5f);
             cart.setDragAir(0.99999);
             cart.motionY = getLaunchForce() * 0.1;
-            cart.getEntityData().setInteger("Launched", 1);
+            cart.getEntityData().setInteger(CartConstants.TAG_LAUNCHED, 1);
             cart.setCanUseRail(false);
             cart.move(MoverType.SELF, cart.motionX, 1.5, cart.motionZ);
         }
@@ -123,7 +124,7 @@ public class TrackKitLauncher extends TrackKitPowered implements IGuiReturnHandl
 
     public void setLaunchForce(int force) {
         force = Math.max(force, MIN_LAUNCH_FORCE);
-        force = Math.min(force, RailcraftConfig.getLaunchRailMaxForce());
+        force = Math.min(force, ModuleExtras.config.maxLaunchTrackForce);
         launchForce = (byte) force;
     }
 }

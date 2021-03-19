@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -26,18 +26,21 @@ import net.minecraft.item.ItemStack;
 @RailcraftModule(value = "railcraft:transport", description = "loaders, cargo cart, tank cart, multiblock tanks")
 public class ModuleTransport extends RailcraftModulePayload {
     public ModuleTransport() {
+        add(
+                RailcraftCarts.CARGO,
+                RailcraftCarts.TANK,
+                RailcraftBlocks.TANK_IRON_GAUGE,
+                RailcraftBlocks.TANK_IRON_VALVE,
+                RailcraftBlocks.TANK_IRON_WALL,
+                RailcraftBlocks.TANK_STEEL_GAUGE,
+                RailcraftBlocks.TANK_STEEL_VALVE,
+                RailcraftBlocks.TANK_STEEL_WALL,
+                RailcraftBlocks.TANK_WATER,
+                RailcraftBlocks.MANIPULATOR,
+                RailcraftBlocks.CHEST_VOID,
+                RailcraftCarts.CHEST_VOID
+        );
         setEnabledEventHandler(new ModuleEventHandler() {
-            @Override
-            public void construction() {
-                add(
-                        RailcraftCarts.CARGO,
-                        RailcraftCarts.TANK,
-                        RailcraftBlocks.MANIPULATOR,
-                        RailcraftBlocks.CHEST_VOID,
-                        RailcraftCarts.CHEST_VOID
-                );
-            }
-
             @Override
             public void init() {
                 ManipulatorVariant itemLoader = ManipulatorVariant.ITEM_LOADER;

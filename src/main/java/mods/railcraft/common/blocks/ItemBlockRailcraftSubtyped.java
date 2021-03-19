@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author CovertJaguar <http://www.railcraft.info/>
  */
-public class ItemBlockRailcraftSubtyped<B extends Block & IRailcraftBlock> extends ItemBlockRailcraft<B> {
+public class ItemBlockRailcraftSubtyped<B extends Block & IRailcraftBlock> extends ItemBlockRailcraft<B> implements IRailcraftItemBlockSubtyped {
 
     public ItemBlockRailcraftSubtyped(B block) {
         super(block);
@@ -28,8 +28,8 @@ public class ItemBlockRailcraftSubtyped<B extends Block & IRailcraftBlock> exten
     }
 
     @Override
-    public @Nullable Class<? extends IVariantEnum> getVariantEnum() {
-        return block.getVariantEnum();
+    public @Nullable Class<? extends IVariantEnum> getVariantEnumClass() {
+        return block.getVariantEnumClass();
     }
 
     @Override
@@ -54,7 +54,7 @@ public class ItemBlockRailcraftSubtyped<B extends Block & IRailcraftBlock> exten
     @Override
     public String getTranslationKey(ItemStack stack) {
         IVariantEnum variant = getVariant(stack);
-        if (variant == null)
+        if (variant == null || (getVariants() != null && getVariants().length <= 1))
             return getTranslationKey();
         String tag = getTranslationKey() + RailcraftConstants.SEPERATOR + variant.getResourcePathSuffix();
         return LocalizationPlugin.convertTag(tag);

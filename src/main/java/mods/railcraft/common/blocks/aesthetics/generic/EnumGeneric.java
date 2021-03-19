@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -13,9 +13,9 @@ import mods.railcraft.api.core.IRailcraftModule;
 import mods.railcraft.common.blocks.IRailcraftBlockContainer;
 import mods.railcraft.common.blocks.IVariantEnumBlock;
 import mods.railcraft.common.blocks.RailcraftBlocks;
+import mods.railcraft.common.modules.ModuleBuilding;
 import mods.railcraft.common.modules.ModuleFactory;
 import mods.railcraft.common.modules.ModuleResources;
-import mods.railcraft.common.modules.ModuleStructures;
 import mods.railcraft.common.modules.ModuleWorld;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +36,15 @@ public enum EnumGeneric implements IVariantEnumBlock<EnumGeneric> {
     @Deprecated
     BLOCK_STEEL(ModuleResources.class, "steel", new SimpleCube(), 5f, 15f),
     @Deprecated
-    BLOCK_CONCRETE(ModuleStructures.class, "concrete", new SimpleCube(), 3f, 15f),
-    BLOCK_CREOSOTE(ModuleStructures.class, "creosote", new FlammableCube(5, 300), 3f, 10f),
+    BLOCK_CONCRETE(ModuleBuilding.class, "concrete", new SimpleCube(), 3f, 15f),
+    @Deprecated
+    BLOCK_CREOSOTE(ModuleBuilding.class, "creosote", new FlammableCube(5, 300), 3f, 10f),
+    @Deprecated
     BLOCK_COKE(ModuleFactory.class, "coke", new FlammableCube(5, 10), 2f, 10f),
     CRUSHED_OBSIDIAN(ModuleResources.class, "crushed_obsidian", new CrushedObsidian(), 2f, 45f),
+    @Deprecated
     STONE_ABYSSAL(ModuleWorld.class, "stone_abyssal", new SimpleCube(), 2f, 10f),
+    @Deprecated
     STONE_QUARRIED(ModuleWorld.class, "stone_quarried", new SimpleCube(), 2f, 10f),
     @Deprecated
     BLOCK_SILVER(ModuleResources.class, "silver", new SimpleCube(), 3f, 10f),
@@ -59,11 +63,7 @@ public enum EnumGeneric implements IVariantEnumBlock<EnumGeneric> {
     private static final List<EnumGeneric> creativeList = new ArrayList<>();
 
     static {
-        creativeList.add(BLOCK_CREOSOTE);
-        creativeList.add(BLOCK_COKE);
         creativeList.add(CRUSHED_OBSIDIAN);
-        creativeList.add(STONE_ABYSSAL);
-        creativeList.add(STONE_QUARRIED);
     }
 
     private final SimpleCube blockDef;
@@ -89,7 +89,7 @@ public enum EnumGeneric implements IVariantEnumBlock<EnumGeneric> {
 
     public static EnumGeneric fromOrdinal(int id) {
         if (id < 0 || id >= VALUES.length)
-            return BLOCK_CONCRETE;
+            return STONE_ABYSSAL;
         return VALUES[id];
     }
 

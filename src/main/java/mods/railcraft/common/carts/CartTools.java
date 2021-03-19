@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -15,6 +15,7 @@ import mods.railcraft.api.core.RailcraftConstantsAPI;
 import mods.railcraft.api.core.RailcraftFakePlayer;
 import mods.railcraft.api.items.IMinecartItem;
 import mods.railcraft.common.blocks.tracks.TrackTools;
+import mods.railcraft.common.blocks.tracks.behaivor.HighSpeedTools;
 import mods.railcraft.common.plugins.forge.PlayerPlugin;
 import mods.railcraft.common.util.entity.EntitySearcher;
 import mods.railcraft.common.util.inventory.InvTools;
@@ -47,7 +48,6 @@ public final class CartTools {
 
     public static final Map<Item, IRailcraftCartContainer> vanillaCartItemMap = new HashMap<>();
     public static final Map<Class<? extends Entity>, IRailcraftCartContainer> classReplacements = new HashMap<>();
-    public static final String HIGH_SPEED_TAG = "HighSpeed";
 
     /**
      * Spawns a new cart entity using the provided item.
@@ -78,7 +78,7 @@ public final class CartTools {
 
     public static @Nullable EntityMinecart placeCart(IRailcraftCartContainer cartType, GameProfile owner, ItemStack cartStack, World world, BlockPos pos) {
         IBlockState state = world.getBlockState(pos);
-        if (TrackTools.isRailBlock(state))
+        if (TrackTools.isRail(state))
             if (EntitySearcher.findMinecarts().around(pos).in(world).isEmpty()) {
                 BlockRailBase.EnumRailDirection trackShape = TrackTools.getTrackDirectionRaw(state);
                 double h = 0.0D;
@@ -98,7 +98,7 @@ public final class CartTools {
     public static void explodeCart(EntityMinecart cart) {
         if (cart.isDead)
             return;
-        setTravellingHighSpeed(cart, false);
+        HighSpeedTools.setTravellingHighSpeed(cart, false);
         cart.motionX = 0;
         cart.motionZ = 0;
         if (Game.isClient(cart.world))
@@ -107,14 +107,6 @@ public final class CartTools {
         cart.world.newExplosion(cart, cart.posX, cart.posY, cart.posZ, 3F, true, true);
         if (MiscTools.RANDOM.nextInt(2) == 0)
             cart.setDead();
-    }
-
-    public static void setTravellingHighSpeed(EntityMinecart cart, boolean flag) {
-        cart.getEntityData().setBoolean(HIGH_SPEED_TAG, flag);
-    }
-
-    public static boolean isTravellingHighSpeed(EntityMinecart cart) {
-        return cart.getEntityData().getBoolean(HIGH_SPEED_TAG);
     }
 
     public static boolean cartVelocityIsLessThan(EntityMinecart cart, float vel) {

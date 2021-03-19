@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -15,7 +15,6 @@ import mods.railcraft.api.crafting.IBlastFurnaceCrafter;
 import mods.railcraft.common.blocks.RailcraftBlocks;
 import mods.railcraft.common.blocks.aesthetics.generic.BlockGeneric;
 import mods.railcraft.common.blocks.aesthetics.generic.EnumGeneric;
-import mods.railcraft.common.blocks.aesthetics.metals.BlockMetal;
 import mods.railcraft.common.blocks.aesthetics.metals.EnumMetal;
 import mods.railcraft.common.core.RailcraftConfig;
 import mods.railcraft.common.fluids.FluidTools;
@@ -41,22 +40,18 @@ public class ModuleResources extends RailcraftModulePayload {
     boolean bottleFree;
 
     public ModuleResources() {
+        add(
+                RailcraftBlocks.METAL,
+                RailcraftItems.BOTTLE_CREOSOTE,
+                RailcraftItems.BOTTLE_STEAM,
+                RailcraftItems.NUGGET,
+                RailcraftItems.INGOT,
+                RailcraftItems.GEAR,
+                RailcraftItems.PLATE,
+                RailcraftItems.DUST
+        );
         instance = this;
         setEnabledEventHandler(new ModuleEventHandler() {
-            @Override
-            public void construction() {
-                add(
-                        RailcraftBlocks.METAL,
-                        RailcraftItems.BOTTLE_CREOSOTE,
-                        RailcraftItems.BOTTLE_STEAM,
-                        RailcraftItems.NUGGET,
-                        RailcraftItems.INGOT,
-                        RailcraftItems.GEAR,
-                        RailcraftItems.PLATE,
-                        RailcraftItems.DUST
-                );
-            }
-
             @Override
             public void init() {
                 if (Fluids.CREOSOTE.isPresent() && RailcraftConfig.creosoteTorchOutput() > 0) {
@@ -101,9 +96,6 @@ public class ModuleResources extends RailcraftModulePayload {
                     type = EnumMetal.BLOCK_BRONZE;
                     if (RailcraftConfig.isSubBlockEnabled(type.getTag()))
                         initMetalBlock(Metal.BRONZE);
-                    if ((RailcraftConfig.forceEnableBronzeRecipe() || !OreDictPlugin.oreExists("dustBronze")) && RailcraftItems.INGOT.isEnabled()) {
-                        CraftingPlugin.addShapelessRecipe(Metal.BRONZE.getStack(Metal.Form.INGOT, RailcraftConfig.enableHarderBronze() ? 3 : 4), "ingotTin", "ingotCopper", "ingotCopper", "ingotCopper");
-                    }
 
                     type = EnumMetal.BLOCK_NICKEL;
                     if (RailcraftConfig.isSubBlockEnabled(type.getTag()))
@@ -112,9 +104,6 @@ public class ModuleResources extends RailcraftModulePayload {
                     type = EnumMetal.BLOCK_INVAR;
                     if (RailcraftConfig.isSubBlockEnabled(type.getTag()))
                         initMetalBlock(Metal.INVAR);
-                    if ((RailcraftConfig.forceEnableInvarRecipe() || !OreDictPlugin.oreExists("dustInvar")) && RailcraftItems.INGOT.isEnabled()) {
-                        CraftingPlugin.addShapelessRecipe(Metal.INVAR.getStack(Metal.Form.INGOT, 3), Items.IRON_INGOT, Items.IRON_INGOT, "ingotNickel");
-                    }
 
                     type = EnumMetal.BLOCK_ZINC;
                     if (RailcraftConfig.isSubBlockEnabled(type.getTag()))
@@ -123,9 +112,6 @@ public class ModuleResources extends RailcraftModulePayload {
                     type = EnumMetal.BLOCK_BRASS;
                     if (RailcraftConfig.isSubBlockEnabled(type.getTag()))
                         initMetalBlock(Metal.BRASS);
-                    if ((RailcraftConfig.forceEnableBrassRecipe() || !OreDictPlugin.oreExists("dustBrass")) && RailcraftItems.INGOT.isEnabled()) {
-                        CraftingPlugin.addShapelessRecipe(Metal.BRASS.getStack(Metal.Form.INGOT, RailcraftConfig.enableHarderBrass() ? 3 : 4), "ingotZinc", "ingotCopper", "ingotCopper", "ingotCopper");
-                    }
                 }
 
                 bottleFree = RailcraftConfig.useCreosoteFurnaceRecipes() || !RailcraftBlocks.COKE_OVEN.isLoaded();

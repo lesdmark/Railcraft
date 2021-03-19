@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -20,11 +20,10 @@ import mods.railcraft.api.signals.SignalTools;
 import mods.railcraft.client.util.sounds.SoundLimiterTicker;
 import mods.railcraft.common.advancements.criterion.RailcraftAdvancementTriggers;
 import mods.railcraft.common.blocks.machine.MachineTileRegistry;
-import mods.railcraft.common.blocks.multi.MultiBlockHelper;
+import mods.railcraft.common.blocks.structures.MultiBlockHelper;
 import mods.railcraft.common.blocks.tracks.TrackConstants;
 import mods.railcraft.common.carts.*;
 import mods.railcraft.common.commands.*;
-import mods.railcraft.common.core.IInterModMessageHandler;
 import mods.railcraft.common.core.InterModMessageRegistry;
 import mods.railcraft.common.core.Railcraft;
 import mods.railcraft.common.core.RailcraftConfig;
@@ -62,7 +61,6 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.common.MinecraftForge;
@@ -90,6 +88,43 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ModuleCore extends RailcraftModulePayload {
 
     public ModuleCore() {
+        add(
+                RailcraftItems.CROWBAR_IRON,
+                RailcraftItems.CROWBAR_STEEL,
+
+                RailcraftItems.AXE_STEEL,
+                RailcraftItems.HOE_STEEL,
+                RailcraftItems.PICKAXE_STEEL,
+                RailcraftItems.SHEARS_STEEL,
+                RailcraftItems.SHOVEL_STEEL,
+                RailcraftItems.SWORD_STEEL,
+
+                RailcraftItems.ARMOR_HELMET_STEEL,
+                RailcraftItems.ARMOR_CHESTPLATE_STEEL,
+                RailcraftItems.ARMOR_LEGGINGS_STEEL,
+                RailcraftItems.ARMOR_BOOTS_STEEL,
+
+                RailcraftItems.MAG_GLASS,
+                RailcraftItems.GOGGLES,
+                RailcraftItems.OVERALLS,
+                RailcraftItems.NOTEPAD,
+
+                RailcraftItems.RAIL,
+                RailcraftItems.TIE,
+                RailcraftItems.REBAR,
+
+                RailcraftCarts.BASIC,
+                RailcraftCarts.CHEST,
+                RailcraftCarts.FURNACE,
+                RailcraftCarts.TNT,
+                RailcraftCarts.HOPPER,
+                RailcraftCarts.COMMAND_BLOCK,
+                RailcraftCarts.SPAWNER,
+
+                RailcraftFluids.CREOSOTE,
+                RailcraftFluids.STEAM
+        );
+
         setEnabledEventHandler(new ModuleEventHandler() {
             private final Field modField = ObfuscationReflectionHelper.findField(EntityEntryBuilder.class, "mod");
 
@@ -107,7 +142,6 @@ public class ModuleCore extends RailcraftModulePayload {
 
                 SignalTools.packetBuilder = PacketBuilder.instance();
 
-                RailcraftFluids.preInitFluids();
                 if (RailcraftConfig.handleBottles())
                     MinecraftForge.EVENT_BUS.register(CustomContainerHandler.INSTANCE);
                 MinecraftForge.EVENT_BUS.register(RailcraftDamageSource.EVENT_HANDLER);
@@ -118,40 +152,6 @@ public class ModuleCore extends RailcraftModulePayload {
                 EntityItemFireproof.register();
 
                 OreDictPlugin.registerNewTags();
-
-                add(
-                        RailcraftItems.CROWBAR_IRON,
-                        RailcraftItems.CROWBAR_STEEL,
-
-                        RailcraftItems.AXE_STEEL,
-                        RailcraftItems.HOE_STEEL,
-                        RailcraftItems.PICKAXE_STEEL,
-                        RailcraftItems.SHEARS_STEEL,
-                        RailcraftItems.SHOVEL_STEEL,
-                        RailcraftItems.SWORD_STEEL,
-
-                        RailcraftItems.ARMOR_HELMET_STEEL,
-                        RailcraftItems.ARMOR_CHESTPLATE_STEEL,
-                        RailcraftItems.ARMOR_LEGGINGS_STEEL,
-                        RailcraftItems.ARMOR_BOOTS_STEEL,
-
-                        RailcraftItems.MAG_GLASS,
-                        RailcraftItems.GOGGLES,
-                        RailcraftItems.OVERALLS,
-                        RailcraftItems.NOTEPAD,
-
-                        RailcraftItems.RAIL,
-                        RailcraftItems.TIE,
-                        RailcraftItems.REBAR,
-
-                        RailcraftCarts.BASIC,
-                        RailcraftCarts.CHEST,
-                        RailcraftCarts.FURNACE,
-                        RailcraftCarts.TNT,
-                        RailcraftCarts.HOPPER,
-                        RailcraftCarts.COMMAND_BLOCK,
-                        RailcraftCarts.SPAWNER
-                );
             }
 
             @Override
@@ -220,17 +220,6 @@ public class ModuleCore extends RailcraftModulePayload {
                     if (EntityMinecart.getCollisionHandler() != null)
                         Game.log().msg(Level.WARN, "Existing Minecart Collision Handler detected, overwriting. Please check your configs to ensure this is desired behavior.");
                     EntityMinecart.setCollisionHandler(MinecartHooks.INSTANCE);
-
-                    InterModMessageRegistry.getInstance().register("high-speed-explosion-excluded-entities", mess -> {
-                        NBTTagCompound nbt = mess.getNBTValue();
-                        if (nbt.hasKey("entities")) {
-                            String entities = nbt.getString("entities");
-                            Iterable<String> split = IInterModMessageHandler.SPLITTER.split(entities);
-                            RailcraftConfig.excludedAllEntityFromHighSpeedExplosions(split);
-                        } else {
-                            Game.log().msg(Level.WARN, "Mod %s attempted to exclude an entity from H.S. explosions but failed: %s", mess.getSender(), nbt);
-                        }
-                    });
                 }
 
                 Set<Item> testSet = new HashSet<>();
@@ -310,7 +299,7 @@ public class ModuleCore extends RailcraftModulePayload {
                         .tracker(80, 2, true)
                         .build();
                 ForgeRegistries.ENTITIES.register(substitute);
-                Game.log().msg(Level.INFO, "Successfully substituted {0} with {1}.", key, cartType.getRegistration().getRegistryName());
+                Game.log().msg(Level.WARN, "Successfully substituted {0} with {1}. This is an intended override.", key, cartType.getRegistration().getRegistryName());
 
                 if (original != null) {
                     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(original, new BehaviorDefaultDispenseItem());
@@ -424,8 +413,6 @@ public class ModuleCore extends RailcraftModulePayload {
 
             @Override
             public void postInit() {
-                RailcraftFluids.finalizeDefinitions();
-
                 addLiquidFuels();
 
                 FluidTools.initWaterBottle(RailcraftConfig.nerfWaterBottle());
@@ -469,19 +456,35 @@ public class ModuleCore extends RailcraftModulePayload {
             }
 
             private void addLiquidFuels() {
-                int bioHeat = (int) (16000 * RailcraftConfig.boilerBiofuelMultiplier());
+                final int bioHeat = (int) (16000 * ModuleSteam.config.biofuelMultiplier);
                 Fluids.BIOETHANOL.ifPresent(f -> FluidFuelManager.addFuel(f, bioHeat));
                 Fluids.BIOFUEL.ifPresent(f -> FluidFuelManager.addFuel(f, bioHeat));
                 Fluids.IC2BIOGAS.ifPresent(f -> FluidFuelManager.addFuel(f, bioHeat));
                 Fluids.BIODIESEL.ifPresent(f -> FluidFuelManager.addFuel(f, bioHeat));
+                Fluids.REFINED_BIOFUEL.ifPresent(f -> FluidFuelManager.addFuel(f, bioHeat));
 
-                Fluids.FUEL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (48000 * RailcraftConfig.boilerFuelMultiplier())));
-                Fluids.COAL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (32000 * RailcraftConfig.boilerFuelMultiplier())));
-                Fluids.PYROTHEUM.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (64000 * RailcraftConfig.boilerFuelMultiplier())));
-                Fluids.CREOSOTE.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (4800 * RailcraftConfig.boilerFuelMultiplier())));
+                final float fuelMultiplier = ModuleSteam.config.fuelMultiplier;
+                Fluids.FUEL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (48000 * fuelMultiplier)));
 
-                Fluids.DIESEL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (96000 * RailcraftConfig.boilerFuelMultiplier())));
-                Fluids.GASOLINE.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (48000 * RailcraftConfig.boilerFuelMultiplier())));
+                Fluids.COAL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (32000 * fuelMultiplier)));
+                Fluids.PYROTHEUM.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (64000 * fuelMultiplier)));
+                Fluids.CREOSOTE.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (4800 * fuelMultiplier)));
+                Fluids.REFINED_OIL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (80000 * fuelMultiplier)));
+                Fluids.REFINED_FUEL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (120000 * fuelMultiplier)));
+                Fluids.TREE_OIL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (32000 * fuelMultiplier)));
+                Fluids.SEED_OIL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (6400 * fuelMultiplier)));
+
+                Fluids.DIESEL.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (96000 * fuelMultiplier)));
+                Fluids.GASOLINE.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (48000 * fuelMultiplier)));
+
+                Fluids.OIL_HEAVY.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (42666 * fuelMultiplier)));
+                Fluids.OIL_DENSE.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (64000 * fuelMultiplier)));
+                Fluids.OIL_DISTILLED.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (20000 * fuelMultiplier)));
+                Fluids.FUEL_DENSE.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (192000 * fuelMultiplier)));
+                Fluids.FUEL_MIXED_HEAVY.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (51200 * fuelMultiplier)));
+                Fluids.FUEL_LIGHT.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (48000 * fuelMultiplier)));
+                Fluids.FUEL_MIXED_LIGHT.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (16000 * fuelMultiplier)));
+                Fluids.FUEL_GASEOUS.ifPresent(f -> FluidFuelManager.addFuel(f, (int) (8000 * fuelMultiplier)));
             }
         });
     }

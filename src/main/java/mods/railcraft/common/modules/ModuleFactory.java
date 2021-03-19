@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
- Copyright (c) CovertJaguar, 2011-2019
+ Copyright (c) CovertJaguar, 2011-2020
  http://railcraft.info
 
  This code is the property of CovertJaguar
@@ -38,7 +38,6 @@ import mods.railcraft.common.util.misc.Code;
 import mods.railcraft.common.util.misc.Game;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
@@ -51,102 +50,85 @@ import java.util.List;
 
 @RailcraftModule(value = "railcraft:factory", description = "coke oven, blast furnace, rolling machine, rock crusher, etc...")
 public class ModuleFactory extends RailcraftModulePayload {
-    private static final int COKE_COOK_TIME = 1800;
-    private static final int COKE_COOK_CREOSOTE = 500;
 
     public ModuleFactory() {
+        add(
+                RailcraftBlocks.ANVIL_STEEL,
+                RailcraftBlocks.EQUIPMENT,
+                RailcraftItems.COKE,
+                RailcraftBlocks.COKE_BLOCK,
+                RailcraftBlocks.COKE_OVEN,
+                RailcraftBlocks.COKE_OVEN_RED,
+                RailcraftBlocks.BLAST_FURNACE,
+                RailcraftBlocks.ROCK_CRUSHER,
+                RailcraftBlocks.STEAM_OVEN,
+                RailcraftBlocks.CHEST_METALS,
+                RailcraftCarts.CHEST_METALS
+        );
         setEnabledEventHandler(new ModuleEventHandler() {
 
             @Override
             public void construction() {
-                add(
-                        RailcraftBlocks.ANVIL_STEEL,
-                        RailcraftBlocks.EQUIPMENT,
-                        RailcraftItems.COKE,
-                        RailcraftBlocks.COKE_OVEN,
-                        RailcraftBlocks.COKE_OVEN_RED,
-                        RailcraftBlocks.BLAST_FURNACE,
-                        RailcraftBlocks.ROCK_CRUSHER,
-                        RailcraftBlocks.STEAM_OVEN,
-                        RailcraftBlocks.TANK_IRON_GAUGE,
-                        RailcraftBlocks.TANK_IRON_VALVE,
-                        RailcraftBlocks.TANK_IRON_WALL,
-                        RailcraftBlocks.TANK_STEEL_GAUGE,
-                        RailcraftBlocks.TANK_STEEL_VALVE,
-                        RailcraftBlocks.TANK_STEEL_WALL,
-                        RailcraftBlocks.TANK_WATER,
-                        RailcraftBlocks.CHEST_METALS,
-                        RailcraftCarts.CHEST_METALS
-                );
                 Code.setValue(Crafters.class, null, BlastFurnaceCrafter.INSTANCE, "blastFurnace");
                 Code.setValue(Crafters.class, null, CokeOvenCrafter.INSTANCE, "cokeOven");
                 Code.setValue(Crafters.class, null, RockCrusherCrafter.INSTANCE, "rockCrusher");
             }
 
+            private void blastRecipe(String type, String tag, Object input, int value, int time, int slag) {
+                BlastFurnaceCrafter.INSTANCE.newRecipe(input)
+                        .name("railcraft:" + type + "_" + tag)
+                        .output(RailcraftItems.INGOT.getStack(value, Metal.STEEL))
+                        .slagOutput(slag * value)
+                        .time(time * value)
+                        .register();
+            }
+
+            private void smeltRecipe(String tag, Object input, int value) {
+                blastRecipe("smelt", tag, input, value, IBlastFurnaceCrafter.SMELT_TIME, 1);
+            }
+
+            private void recycleRecipe(String tag, Object input, int value) {
+                blastRecipe("recycle", tag, input, value, IBlastFurnaceCrafter.SMELT_TIME / 2, 0);
+            }
+
             @Override
             public void init() {
                 {
-                    int smeltTime = IBlastFurnaceCrafter.SMELT_TIME;
-                    Metal steel = Metal.STEEL;
-                    BlastFurnaceCrafter bf = BlastFurnaceCrafter.INSTANCE;
-                    bf.newRecipe(Items.IRON_INGOT)
-                            .name("railcraft:ingot_steel")
-                            .output(RailcraftItems.INGOT.getStack(1, steel))
-                            .slagOutput(1).time(smeltTime).register();
+                    smeltRecipe("ingot", Items.IRON_INGOT, 1);
 
-                    bf.addRecipe("railcraft:smelt_helmet", Ingredient.fromItem(Items.IRON_HELMET), smeltTime * 5,
-                            RailcraftItems.INGOT.getStack(5, steel), 5);
-                    bf.addRecipe("railcraft:smelt_chestplate", Ingredient.fromItem(Items.IRON_CHESTPLATE), smeltTime * 8,
-                            RailcraftItems.INGOT.getStack(8, steel), 8);
-                    bf.addRecipe("railcraft:smelt_leggings", Ingredient.fromItem(Items.IRON_LEGGINGS), smeltTime * 7,
-                            RailcraftItems.INGOT.getStack(7, steel), 7);
-                    bf.addRecipe("railcraft:smelt_boots", Ingredient.fromItem(Items.IRON_BOOTS), smeltTime * 4,
-                            RailcraftItems.INGOT.getStack(4, steel), 4);
+                    if (RailcraftConfig.getRecipeConfig("railcraft.blastFurnace.bucket")) {
+                        smeltRecipe("bucket", Items.BUCKET, 3);
+                    }
 
-                    bf.addRecipe("railcraft:smelt_horse_armor", Ingredient.fromItem(Items.IRON_HORSE_ARMOR), smeltTime * 4,
-                            RailcraftItems.INGOT.getStack(4, steel), 4);
+                    smeltRecipe("helmet", Items.IRON_HELMET, 5);
+                    smeltRecipe("chestplate", Items.IRON_CHESTPLATE, 8);
+                    smeltRecipe("leggings", Items.IRON_LEGGINGS, 7);
+                    smeltRecipe("boots", Items.IRON_BOOTS, 4);
 
-                    bf.addRecipe("railcraft:smelt_sword", Ingredient.fromItem(Items.IRON_SWORD), smeltTime * 2,
-                            RailcraftItems.INGOT.getStack(2, steel), 2);
-                    bf.addRecipe("railcraft:smelt_shovel", Ingredient.fromItem(Items.IRON_SHOVEL), smeltTime,
-                            RailcraftItems.INGOT.getStack(1, steel), 1);
-                    bf.addRecipe("railcraft:smelt_pickaxe", Ingredient.fromItem(Items.IRON_PICKAXE), smeltTime * 3,
-                            RailcraftItems.INGOT.getStack(3, steel), 3);
-                    bf.addRecipe("railcraft:smelt_axe", Ingredient.fromItem(Items.IRON_AXE), smeltTime * 3,
-                            RailcraftItems.INGOT.getStack(3, steel), 3);
-                    bf.addRecipe("railcraft:smelt_hoe", Ingredient.fromItem(Items.IRON_HOE), smeltTime * 2,
-                            RailcraftItems.INGOT.getStack(2, steel), 2);
-                    bf.addRecipe("railcraft:smelt_shears", Ingredient.fromItem(Items.SHEARS), smeltTime * 2,
-                            RailcraftItems.INGOT.getStack(2, steel), 2);
+                    smeltRecipe("horse_armor", Items.IRON_HORSE_ARMOR, 4);
 
-                    bf.addRecipe("railcraft:smelt_crowbar", RailcraftItems.CROWBAR_IRON.getIngredient(), smeltTime * 3,
-                            RailcraftItems.INGOT.getStack(3, steel), 3);
+                    smeltRecipe("sword", Items.IRON_SWORD, 2);
+                    smeltRecipe("shovel", Items.IRON_SHOVEL, 1);
+                    smeltRecipe("pickaxe", Items.IRON_PICKAXE, 3);
+                    smeltRecipe("axe", Items.IRON_AXE, 3);
+                    smeltRecipe("hoe", Items.IRON_HOE, 2);
+                    smeltRecipe("shears", Items.SHEARS, 2);
+                    smeltRecipe("crowbar", RailcraftItems.CROWBAR_IRON, 3);
 
-                    bf.addRecipe("railcraft:smelt_door", Ingredient.fromItem(Items.IRON_DOOR), smeltTime * 6,
-                            RailcraftItems.INGOT.getStack(6, steel), 6);
-                    bf.addRecipe("railcraft:smelt_trapdoor", Ingredient.fromItem(Item.getItemFromBlock(Blocks.IRON_TRAPDOOR)), smeltTime * 6,
-                            RailcraftItems.INGOT.getStack(4, steel), 4);
+                    smeltRecipe("door", Items.IRON_DOOR, 6);
+                    smeltRecipe("trapdoor", Blocks.IRON_TRAPDOOR, 6);
 
-                    int recycleTime = smeltTime / 2;
-                    bf.addRecipe("railcraft:recycle_helmet", RailcraftItems.ARMOR_HELMET_STEEL.getIngredient(), recycleTime * 4,
-                            RailcraftItems.INGOT.getStack(4, steel), 0);
-                    bf.addRecipe("railcraft:recycle_chestplate", RailcraftItems.ARMOR_CHESTPLATE_STEEL.getIngredient(), recycleTime * 6,
-                            RailcraftItems.INGOT.getStack(6, steel), 0);
-                    bf.addRecipe("railcraft:recycle_leggings", RailcraftItems.ARMOR_LEGGINGS_STEEL.getIngredient(), recycleTime * 5,
-                            RailcraftItems.INGOT.getStack(5, steel), 0);
-                    bf.addRecipe("railcraft:recycle_boots", RailcraftItems.ARMOR_BOOTS_STEEL.getIngredient(), recycleTime * 3,
-                            RailcraftItems.INGOT.getStack(3, steel), 0);
 
-                    bf.addRecipe("railcraft:recycle_sword", RailcraftItems.SWORD_STEEL.getIngredient(), recycleTime,
-                            RailcraftItems.INGOT.getStack(1, steel), 0);
-                    bf.addRecipe("railcraft:recycle_pickaxe", RailcraftItems.PICKAXE_STEEL.getIngredient(), recycleTime * 2,
-                            RailcraftItems.INGOT.getStack(2, steel), 0);
-                    bf.addRecipe("railcraft:recycle_hoe", RailcraftItems.HOE_STEEL.getIngredient(), recycleTime,
-                            RailcraftItems.INGOT.getStack(1, steel), 0);
-                    bf.addRecipe("railcraft:recycle_axe", RailcraftItems.AXE_STEEL.getIngredient(), recycleTime * 2,
-                            RailcraftItems.INGOT.getStack(2, steel), 0);
-                    bf.addRecipe("railcraft:recycle_shears", RailcraftItems.SHEARS_STEEL.getIngredient(), recycleTime,
-                            RailcraftItems.INGOT.getStack(1, steel), 0);
+                    recycleRecipe("helmet", RailcraftItems.ARMOR_HELMET_STEEL, 4);
+                    recycleRecipe("chestplate", RailcraftItems.ARMOR_CHESTPLATE_STEEL, 6);
+                    recycleRecipe("leggings", RailcraftItems.ARMOR_LEGGINGS_STEEL, 5);
+                    recycleRecipe("boots", RailcraftItems.ARMOR_BOOTS_STEEL, 3);
+
+                    recycleRecipe("sword", RailcraftItems.SWORD_STEEL, 1);
+                    recycleRecipe("pickaxe", RailcraftItems.PICKAXE_STEEL, 2);
+                    recycleRecipe("hoe", RailcraftItems.HOE_STEEL, 1);
+                    recycleRecipe("axe", RailcraftItems.AXE_STEEL, 2);
+                    recycleRecipe("shears", RailcraftItems.SHEARS_STEEL, 1);
                 }
                 {
                     IRockCrusherCrafter rc = Crafters.rockCrusher();
@@ -390,7 +372,7 @@ public class ModuleFactory extends RailcraftModulePayload {
                     }
                 }
 
-                if (RailcraftModuleManager.isModuleEnabled(ModuleStructures.class)) {
+                if (RailcraftModuleManager.isModuleEnabled(ModuleBuilding.class)) {
                     if (RailcraftBlocks.BLAST_FURNACE.isLoaded() && BrickTheme.INFERNAL.isLoaded()) {
 
                         ItemStack stack = RailcraftBlocks.BLAST_FURNACE.getStack(4);
@@ -398,34 +380,9 @@ public class ModuleFactory extends RailcraftModulePayload {
                                 " B ",
                                 "BPB",
                                 " B ",
-                                'B', BrickTheme.INFERNAL.getStack(1, BrickVariant.BRICK),
+                                'B', BrickTheme.INFERNAL.getStack(1, BrickVariant.PAVER),
                                 'P', Items.MAGMA_CREAM);
                     }
-                    if (RailcraftBlocks.COKE_OVEN.isLoaded() && BrickTheme.SANDY.isLoaded()) {
-                        ItemStack stack = RailcraftBlocks.COKE_OVEN.getStack();
-                        CraftingPlugin.addShapedRecipe(stack,
-                                " B ",
-                                " S ",
-                                " B ",
-                                'B', BrickTheme.SANDY.getStack(1, BrickVariant.BRICK),
-                                'S', "sand");
-                    }
-                }
-
-                if (EnumGeneric.BLOCK_COKE.isEnabled()) {
-                    Crafters.cokeOven().newRecipe(Ingredients.from(Blocks.COAL_BLOCK))
-                            .name("railcraft:coke_block")
-                            .output(EnumGeneric.BLOCK_COKE.getStack())
-                            .fluid(Fluids.CREOSOTE.get(COKE_COOK_CREOSOTE * 9))
-                            .time(COKE_COOK_TIME * 9)
-                            .register();
-                    ItemStack stack = EnumGeneric.BLOCK_COKE.getStack();
-                    CraftingPlugin.addShapedRecipe(stack,
-                            "CCC",
-                            "CCC",
-                            "CCC",
-                            'C', RailcraftItems.COKE);
-                    CraftingPlugin.addShapelessRecipe(RailcraftItems.COKE.getStack(9), stack);
                 }
 
                 BlastFurnaceCrafter.INSTANCE.initFuel();
@@ -436,7 +393,6 @@ public class ModuleFactory extends RailcraftModulePayload {
                         .name("railcraft:logs")
                         .output(new ItemStack(Items.COAL, 1, 1))
                         .fluid(Fluids.CREOSOTE.get(250))
-                        .time(COKE_COOK_TIME)
                         .register();
 
                 if (Mod.FORESTRY.isLoaded()) {
